@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lift/screens/workouts_screen.dart';
 import 'package:lift/screens/exercises_screen.dart';
 import 'package:lift/screens/weight_screen.dart';
+import 'package:lift/screens/about_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const WorkoutsScreen(),
     const ExercisesScreen(),
     const WeightScreen(),
+    const AboutScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -52,6 +54,11 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.monitor_weight_outlined),
             selectedIcon: Icon(Icons.monitor_weight),
             label: 'Weight',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.info_outline),
+            selectedIcon: Icon(Icons.info),
+            label: 'About',
           ),
         ],
       ),
