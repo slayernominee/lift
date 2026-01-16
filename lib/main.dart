@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:lift/models/exercise.dart';
 import 'package:lift/models/workout.dart';
 import 'package:lift/models/log.dart';
+import 'package:lift/models/weight.dart';
 import 'package:lift/providers/workout_provider.dart';
 import 'package:lift/screens/home_screen.dart';
 
@@ -19,11 +20,13 @@ void main() async {
   Hive.registerAdapter(WorkoutExerciseAdapter());
   Hive.registerAdapter(ExerciseSetAdapter());
   Hive.registerAdapter(ExerciseLogAdapter());
+  Hive.registerAdapter(WeightEntryAdapter());
 
   // Open Hive Boxes
   await Hive.openBox<Exercise>('exercises');
   await Hive.openBox<Workout>('workouts');
   await Hive.openBox<ExerciseLog>('logs');
+  await Hive.openBox<WeightEntry>('weights');
 
   runApp(
     MultiProvider(

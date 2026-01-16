@@ -123,6 +123,7 @@ class WorkoutsScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'workouts_fab',
         onPressed: () => _showAddWorkoutDialog(context),
         child: const Icon(Icons.add),
       ),

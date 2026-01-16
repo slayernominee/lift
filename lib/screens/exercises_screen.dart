@@ -160,6 +160,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'exercises_fab',
         onPressed: () => _showAddExerciseDialog(context),
         child: const Icon(Icons.add),
       ),

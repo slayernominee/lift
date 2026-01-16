@@ -3,11 +3,13 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lift/models/exercise.dart';
 import 'package:lift/models/workout.dart';
 import 'package:lift/models/log.dart';
+import 'package:lift/models/weight.dart';
 
 class WorkoutProvider with ChangeNotifier {
   final Box<Exercise> _exerciseBox = Hive.box<Exercise>('exercises');
   final Box<Workout> _workoutBox = Hive.box<Workout>('workouts');
   final Box<ExerciseLog> _logBox = Hive.box<ExerciseLog>('logs');
+  final Box<WeightEntry> _weightBox = Hive.box<WeightEntry>('weights');
 
   WorkoutProvider() {
     _initDefaults();
@@ -16,6 +18,8 @@ class WorkoutProvider with ChangeNotifier {
   // --- Getters ---
   List<Exercise> get exercises => _exerciseBox.values.toList();
   List<Workout> get workouts => _workoutBox.values.toList();
+  List<WeightEntry> get weightEntries =>
+      _weightBox.values.toList()..sort((a, b) => b.date.compareTo(a.date));
 
   // --- Exercise Methods ---
   void addExercise(Exercise exercise) {
@@ -84,6 +88,17 @@ class WorkoutProvider with ChangeNotifier {
     final item = workout.exercises.removeAt(oldIndex);
     workout.exercises.insert(newIndex, item);
     updateWorkout(workout);
+  }
+
+  // --- Weight Methods ---
+  void addWeightEntry(WeightEntry entry) {
+    _weightBox.put(entry.id, entry);
+    notifyListeners();
+  }
+
+  void deleteWeightEntry(String id) {
+    _weightBox.delete(id);
+    notifyListeners();
   }
 
   // --- Initial Defaults ---
