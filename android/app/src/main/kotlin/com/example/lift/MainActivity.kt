@@ -1,4 +1,4 @@
-package com.example.lift
+package com.slayernominee.lift
 
 import io.flutter.embedding.android.FlutterActivity
 
