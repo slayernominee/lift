@@ -15,6 +15,8 @@ class WorkoutDetailScreen extends StatefulWidget {
 }
 
 class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
+  bool _isEditMode = false;
+
   void _showAddExerciseBottomSheet() {
     final provider = context.read<WorkoutProvider>();
     final availableExercises = provider.exercises;
@@ -155,6 +157,15 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         ),
         actions: [
           IconButton(
+            icon: Icon(_isEditMode ? Icons.check : Icons.edit),
+            color: _isEditMode ? Theme.of(context).colorScheme.primary : null,
+            onPressed: () {
+              setState(() {
+                _isEditMode = !_isEditMode;
+              });
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.add),
             onPressed: _showAddExerciseBottomSheet,
           ),
@@ -168,6 +179,18 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
             );
           }
 
+          if (!_isEditMode) {
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: widget.workout.exercises.length,
+              itemBuilder: (context, index) {
+                final workoutExercise = widget.workout.exercises[index];
+                final exercise = provider.getExerciseById(workoutExercise.exerciseId);
+                return _buildExerciseCard(workoutExercise, exercise, provider, index, false);
+              },
+            );
+          }
+
           return ReorderableListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: widget.workout.exercises.length,
@@ -177,91 +200,107 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
             itemBuilder: (context, index) {
               final workoutExercise = widget.workout.exercises[index];
               final exercise = provider.getExerciseById(workoutExercise.exerciseId);
-
-              return Card(
-                key: ValueKey(workoutExercise.id),
-                margin: const EdgeInsets.only(bottom: 12),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                    width: 1,
-                  ),
-                ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-                  title: Text(
-                    exercise?.name ?? 'Unknown Exercise',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            '${workoutExercise.targetSets} sets',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        if (exercise?.muscleGroup != null) ...[
-                          const SizedBox(width: 8),
-                          Text(
-                            exercise!.muscleGroup!,
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.settings_outlined, size: 20),
-                        onPressed: () => _editSets(workoutExercise),
-                        tooltip: 'Edit sets',
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                        onPressed: () {
-                          setState(() {
-                            widget.workout.exercises.removeAt(index);
-                            provider.updateWorkout(widget.workout);
-                          });
-                        },
-                        tooltip: 'Remove exercise',
-                      ),
-                      const Icon(Icons.drag_handle, color: Colors.grey),
-                    ],
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ExerciseTrackingScreen(
-                          workout: widget.workout,
-                          workoutExercise: workoutExercise,
-                          exercise: exercise!,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              );
+              return _buildExerciseCard(workoutExercise, exercise, provider, index, true);
             },
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildExerciseCard(
+    WorkoutExercise workoutExercise,
+    Exercise? exercise,
+    WorkoutProvider provider,
+    int index,
+    bool isEditMode,
+  ) {
+    return Card(
+      key: ValueKey(workoutExercise.id),
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+        title: Text(
+          exercise?.name ?? 'Unknown Exercise',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '${workoutExercise.targetSets} sets',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (exercise?.muscleGroup != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  exercise!.muscleGroup!,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ],
+          ),
+        ),
+        trailing: isEditMode
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.settings_outlined, size: 20),
+                    onPressed: () => _editSets(workoutExercise),
+                    tooltip: 'Edit sets',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                    onPressed: () {
+                      setState(() {
+                        widget.workout.exercises.removeAt(index);
+                        provider.updateWorkout(widget.workout);
+                      });
+                    },
+                    tooltip: 'Remove exercise',
+                  ),
+                  const Icon(Icons.drag_handle, color: Colors.grey),
+                ],
+              )
+            : Icon(
+                Icons.chevron_right,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              ),
+        onTap: isEditMode
+            ? null
+            : () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ExerciseTrackingScreen(
+                      workout: widget.workout,
+                      workoutExercise: workoutExercise,
+                      exercise: exercise!,
+                    ),
+                  ),
+                );
+              },
       ),
     );
   }

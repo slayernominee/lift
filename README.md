@@ -59,7 +59,7 @@
    flutter run
    ```
 
-## 📱 Screenshots
+## 📱 Screenshots (TODO)
 
 |         Workouts         |       Progress Charts        |   Weight Tracker    |
 | :----------------------: | :--------------------------: | :-----------------: |

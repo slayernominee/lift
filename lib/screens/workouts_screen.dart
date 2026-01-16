@@ -4,8 +4,15 @@ import 'package:lift/providers/workout_provider.dart';
 import 'package:lift/models/workout.dart';
 import 'package:lift/screens/workout_detail_screen.dart';
 
-class WorkoutsScreen extends StatelessWidget {
+class WorkoutsScreen extends StatefulWidget {
   const WorkoutsScreen({super.key});
+
+  @override
+  State<WorkoutsScreen> createState() => _WorkoutsScreenState();
+}
+
+class _WorkoutsScreenState extends State<WorkoutsScreen> {
+  bool _isEditMode = false;
 
   void _showAddWorkoutDialog(BuildContext context) {
     final controller = TextEditingController();
@@ -47,6 +54,15 @@ class WorkoutsScreen extends StatelessWidget {
         title: const Text('Workouts'),
         actions: [
           IconButton(
+            icon: Icon(_isEditMode ? Icons.check : Icons.edit),
+            color: _isEditMode ? Theme.of(context).colorScheme.primary : null,
+            onPressed: () {
+              setState(() {
+                _isEditMode = !_isEditMode;
+              });
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _showAddWorkoutDialog(context),
           ),
@@ -83,32 +99,35 @@ class WorkoutsScreen extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text('${workout.exercises.length} exercises'),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Delete Workout'),
-                          content: Text('Are you sure you want to delete "${workout.name}"?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                provider.deleteWorkout(workout.id);
-                                Navigator.pop(context);
-                              },
-                              child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                  trailing: _isEditMode
+                      ? IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Delete Workout'),
+                                content: Text('Are you sure you want to delete "${workout.name}"?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      provider.deleteWorkout(workout.id);
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        )
+                      : const Icon(Icons.chevron_right, color: Colors.grey),
                   onTap: () {
+                    if (_isEditMode) return;
                     Navigator.push(
                       context,
                       MaterialPageRoute(
