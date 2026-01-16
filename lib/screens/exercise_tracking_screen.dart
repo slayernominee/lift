@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:lift/models/exercise.dart';
@@ -167,20 +168,143 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
       child: Row(
         children: const [
           Expanded(flex: 1, child: Text('SET', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey))),
-          Expanded(flex: 3, child: Text('WEIGHT (KG)', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey))),
           Expanded(flex: 3, child: Text('REPS', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey))),
-          Expanded(flex: 1, child: SizedBox()),
+          Expanded(flex: 3, child: Text('WEIGHT (KG)', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey))),
+          Expanded(flex: 2, child: SizedBox()),
         ],
       ),
     );
   }
 
+  void _showSetPicker(int index, ExerciseSet set) {
+    int tempReps = set.reps;
+    double tempWeight = set.weight;
+
+    // Default to last session values if current is zero
+    if (tempReps == 0 && _lastLog != null && _lastLog!.sets.length > index) {
+      tempReps = _lastLog!.sets[index].reps;
+    }
+    if (tempWeight == 0 && _lastLog != null && _lastLog!.sets.length > index) {
+      tempWeight = _lastLog!.sets[index].weight;
+    }
+
+    int weightInt = tempWeight.floor();
+    int weightFractionIdx = [0, 25, 50, 75].indexOf(((tempWeight - weightInt) * 100).round()).clamp(0, 3);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return Container(
+          height: 350,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  Text(
+                    'Set ${index + 1}',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        set.reps = tempReps;
+                        set.weight = tempWeight;
+                        _saveLog();
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: Row(
+                  children: [
+                    // Reps Wheel
+                    Expanded(
+                      flex: 1,
+                      child: Column(
+                        children: [
+                          const Text('REPS', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                          Expanded(
+                            child: CupertinoPicker(
+                              itemExtent: 40,
+                              scrollController: FixedExtentScrollController(initialItem: tempReps),
+                              onSelectedItemChanged: (val) => tempReps = val,
+                              children: List.generate(101, (i) => Center(child: Text('$i'))),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const VerticalDivider(),
+                    // Weight Double Wheel (Integer + Fraction)
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        children: [
+                          const Text('WEIGHT (KG)', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: CupertinoPicker(
+                                    itemExtent: 40,
+                                    scrollController: FixedExtentScrollController(initialItem: weightInt),
+                                    onSelectedItemChanged: (val) {
+                                      weightInt = val;
+                                      tempWeight = weightInt + ([0, 25, 50, 75][weightFractionIdx] / 100.0);
+                                    },
+                                    children: List.generate(501, (i) => Center(child: Text('$i'))),
+                                  ),
+                                ),
+                                const Text('.', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                                Expanded(
+                                  child: CupertinoPicker(
+                                    itemExtent: 40,
+                                    scrollController: FixedExtentScrollController(initialItem: weightFractionIdx),
+                                    onSelectedItemChanged: (idx) {
+                                      weightFractionIdx = idx;
+                                      tempWeight = weightInt + ([0, 25, 50, 75][idx] / 100.0);
+                                    },
+                                    children: [0, 25, 50, 75].map((f) => Center(child: Text(f.toString().padLeft(2, '0')))).toList(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildSetRow(int index, ExerciseSet set) {
-    String weightPlaceholder = '0';
-    String repsPlaceholder = '0';
-    if (_lastLog != null && _lastLog!.sets.length > index) {
-      weightPlaceholder = _lastLog!.sets[index].weight.toString();
-      repsPlaceholder = _lastLog!.sets[index].reps.toString();
+    String weightDisplay = set.weight == 0 ? '-' : set.weight.toString();
+    String repsDisplay = set.reps == 0 ? '-' : set.reps.toString();
+
+    String weightPlaceholder = '';
+    String repsPlaceholder = '';
+    if (set.weight == 0 && _lastLog != null && _lastLog!.sets.length > index) {
+      weightPlaceholder = '(${_lastLog!.sets[index].weight})';
+    }
+    if (set.reps == 0 && _lastLog != null && _lastLog!.sets.length > index) {
+      repsPlaceholder = '(${_lastLog!.sets[index].reps})';
     }
 
     return Dismissible(
@@ -199,73 +323,89 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 4),
-        child: Row(
-          children: [
-            Expanded(
-              flex: 1,
-              child: Center(
-                child: Text(
-                  '${index + 1}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 3,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: TextFormField(
-                  key: ValueKey('weight-$index-${_selectedDate.toIso8601String()}'),
-                  initialValue: set.weight == 0 ? '' : set.weight.toString(),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  textAlign: TextAlign.center,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    fillColor: Theme.of(context).colorScheme.surface,
-                    filled: true,
-                    hintText: weightPlaceholder,
-                    hintStyle: const TextStyle(color: Colors.grey, fontWeight: FontWeight.normal),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: InkWell(
+          onTap: () => _showSetPicker(index, set),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: Center(
+                    child: Text(
+                      '${index + 1}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
-                  onChanged: (val) {
-                    set.weight = double.tryParse(val) ?? 0;
-                    _saveLog();
-                  },
                 ),
-              ),
-            ),
-            Expanded(
-              flex: 3,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: TextFormField(
-                  key: ValueKey('reps-$index-${_selectedDate.toIso8601String()}'),
-                  initialValue: set.reps == 0 ? '' : set.reps.toString(),
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    fillColor: Theme.of(context).colorScheme.surface,
-                    filled: true,
-                    hintText: repsPlaceholder,
-                    hintStyle: const TextStyle(color: Colors.grey, fontWeight: FontWeight.normal),
+                Expanded(
+                  flex: 3,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        repsDisplay,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: set.reps == 0 ? Colors.grey : null,
+                          fontWeight: set.reps == 0 ? FontWeight.normal : FontWeight.bold,
+                        ),
+                      ),
+                      if (repsPlaceholder.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Text(
+                            repsPlaceholder,
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ),
+                    ],
                   ),
-                  onChanged: (val) {
-                    set.reps = int.tryParse(val) ?? 0;
-                    _saveLog();
-                  },
                 ),
-              ),
+                Expanded(
+                  flex: 3,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        weightDisplay,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: set.weight == 0 ? Colors.grey : null,
+                          fontWeight: set.weight == 0 ? FontWeight.normal : FontWeight.bold,
+                        ),
+                      ),
+                      if (weightPlaceholder.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Text(
+                            weightPlaceholder,
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Center(
+                    child: IconButton(
+                      icon: const Icon(Icons.refresh, size: 20, color: Colors.grey),
+                      onPressed: () {
+                        setState(() {
+                          set.reps = 0;
+                          set.weight = 0;
+                          _saveLog();
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const Expanded(
-              flex: 1,
-              child: SizedBox(),
-            ),
-          ],
+          ),
         ),
       ),
     );
