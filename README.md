@@ -2,7 +2,10 @@
 
 **Lift** is a modern, high-performance fitness tracker built with Flutter. It's designed for lifters who want a clean, distraction-free interface to manage their workouts, track their strength progress, and monitor body weight trends.
 
-![Lift Logo](assets/images/logo.png)
+## Showcase
+
+| <img src="assets/images/showcase/1.webp" width="200" /> | <img src="assets/images/showcase/2.webp" width="200" /> | <img src="assets/images/showcase/3.webp" width="200" /> |
+| <img src="assets/images/showcase/4.webp" width="200" /> | <img src="assets/images/showcase/5.webp" width="200" /> | <img src="assets/images/showcase/6.webp" width="200" /> |
 
 ## ✨ Features
 
@@ -59,16 +62,6 @@
    flutter run
    ```
 
-## 📱 Screenshots (TODO)
-
-|         Workouts         |       Progress Charts        |   Weight Tracker    |
-| :----------------------: | :--------------------------: | :-----------------: |
-| List and manage routines | Scrollable time-based volume | Monitor body trends |
-
-## 📄 License
-
-This project is open source. See the [GitHub Repository](https://github.com/slayernominee/lift) for more information.
-
 ---
 
-Built with 💪 by a dedicated lifter.
+Built for lifters ;P

@@ -4,8 +4,8 @@ import 'package:url_launcher/url_launcher.dart';
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
-  Future<void> _launchURL() async {
-    final Uri url = Uri.parse('https://github.com/slayernominee/lift');
+  Future<void> _launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
     if (!await launchUrl(url)) {
       throw Exception('Could not launch $url');
     }
@@ -84,7 +84,20 @@ class AboutScreen extends StatelessWidget {
                 title: const Text('Source Code'),
                 subtitle: const Text('View on GitHub'),
                 trailing: const Icon(Icons.open_in_new, size: 20),
-                onTap: _launchURL,
+                onTap: () => _launchURL('https://github.com/slayernominee/lift'),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Issues Card
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.bug_report_outlined),
+                title: const Text('Report Issues'),
+                subtitle: const Text('Submit feedback or bugs'),
+                trailing: const Icon(Icons.open_in_new, size: 20),
+                onTap: () => _launchURL('https://github.com/slayernominee/lift/issues'),
               ),
             ),
 
@@ -103,7 +116,20 @@ class AboutScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 60),
+            const SizedBox(height: 48),
+
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'If you enjoy using Lift, consider starring the project on GitHub to support its development!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 48),
 
             const Center(
               child: Text(
