@@ -25,6 +25,7 @@
   - **Weight Tracker**: Monitor body weight with a dedicated chart and date/time-specific logs.
   - **Interactive Timelines**: Swipe through history with range toggles (1W, 1M, 3M, All).
 - **Modern UI**: A sleek, dark-themed interface built using Material 3 and an indigo-slate color palette.
+- **100% Offline**: Works completely offline - no internet connection required for any features.
 - **Local-First**: Fast performance and offline support using Hive NoSQL storage.
 
 ## 🛠️ Tech Stack
@@ -34,6 +35,25 @@
 - **Database**: [Hive](https://pub.dev/packages/hive) (Local Persistence)
 - **Charts**: [fl_chart](https://pub.dev/packages/fl_chart)
 - **Icons**: Material Icons & Font Awesome
+
+## 🔒 Privacy & Offline-First
+
+**Lift is designed with your privacy as the top priority.**
+
+### Completely Offline
+
+- **No Internet Required**: The app works 100% offline. All features are available without an internet connection.
+- **No Cloud Sync**: Your data never leaves your device. No account creation, no cloud servers, no data transmission.
+- **Your Data, Your Device**: All your workout data, preferences, and settings are stored locally on your device.
+
+### Privacy Commitment
+
+- **No Data Collection**: We don't collect, share, or sell any of your data.
+- **No Analytics**: No tracking or analytics services are used.
+- **No Accounts**: Use the app immediately without creating an account or providing personal information.
+- **Your Data Stays Private**: Since everything is stored locally, only you have access to your workout information.
+
+For the complete privacy statement, see [docs/PRIVACY.md](docs/PRIVACY.md).
 
 ## 🚀 Getting Started
 
