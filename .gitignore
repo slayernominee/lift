@@ -46,3 +46,6 @@ app.*.map.json
 
 # Key signing configuration (contains sensitive data)
 android/key.properties
+
+# tets
+test_hive/
