@@ -25,7 +25,11 @@ class Exercise extends HiveObject with EquatableMixin {
     this.muscleGroup,
   });
 
-  factory Exercise.create({required String name, String? description, String? muscleGroup}) {
+  factory Exercise.create({
+    required String name,
+    String? description,
+    String? muscleGroup,
+  }) {
     return Exercise(
       id: const Uuid().v4(),
       name: name,
@@ -33,6 +37,20 @@ class Exercise extends HiveObject with EquatableMixin {
       muscleGroup: muscleGroup,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'description': description,
+    'muscleGroup': muscleGroup,
+  };
+
+  factory Exercise.fromJson(Map<String, dynamic> json) => Exercise(
+    id: json['id'] as String,
+    name: json['name'] as String,
+    description: json['description'] as String?,
+    muscleGroup: json['muscleGroup'] as String?,
+  );
 
   @override
   List<Object?> get props => [id, name, description, muscleGroup];

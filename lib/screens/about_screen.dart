@@ -1,8 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
+import 'package:lift/providers/workout_provider.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
+
+  Future<void> _exportAllWorkouts(BuildContext context) async {
+    final provider = context.read<WorkoutProvider>();
+    final result = await provider.exportWorkouts();
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Export Result'),
+          content: Text(result),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _importAllWorkouts(BuildContext context) async {
+    final provider = context.read<WorkoutProvider>();
+    final result = await provider.importWorkouts();
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            result['success'] ?? false ? 'Import Successful' : 'Import Failed',
+          ),
+          content: Text(result['message'] as String? ?? 'Unknown error'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
 
   Future<void> _launchURL(String urlString) async {
     final Uri url = Uri.parse(urlString);
@@ -14,9 +60,7 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('About Lift'),
-      ),
+      appBar: AppBar(title: const Text('About Lift')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -31,7 +75,9 @@ class AboutScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.2),
                       blurRadius: 20,
                       spreadRadius: 5,
                     ),
@@ -63,7 +109,7 @@ class AboutScreen extends StatelessWidget {
             ),
             const Center(
               child: Text(
-                'Version 1.0.0',
+                'Version 1.1.0',
                 style: TextStyle(color: Colors.grey),
               ),
             ),
@@ -84,7 +130,8 @@ class AboutScreen extends StatelessWidget {
                 title: const Text('Source Code'),
                 subtitle: const Text('View on GitHub'),
                 trailing: const Icon(Icons.open_in_new, size: 20),
-                onTap: () => _launchURL('https://github.com/slayernominee/lift'),
+                onTap: () =>
+                    _launchURL('https://github.com/slayernominee/lift'),
               ),
             ),
 
@@ -97,7 +144,8 @@ class AboutScreen extends StatelessWidget {
                 title: const Text('Report Issues'),
                 subtitle: const Text('Submit feedback or bugs'),
                 trailing: const Icon(Icons.open_in_new, size: 20),
-                onTap: () => _launchURL('https://github.com/slayernominee/lift/issues'),
+                onTap: () =>
+                    _launchURL('https://github.com/slayernominee/lift/issues'),
               ),
             ),
 
@@ -111,8 +159,34 @@ class AboutScreen extends StatelessWidget {
                 onTap: () => showLicensePage(
                   context: context,
                   applicationName: 'Lift',
-                  applicationVersion: '1.0.0',
+                  applicationVersion: '1.1.0',
                 ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Export Workouts
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.file_download, color: Colors.blue),
+                title: const Text('Export All Workouts'),
+                subtitle: const Text('Backup your workout configurations'),
+                trailing: const Icon(Icons.chevron_right, size: 20),
+                onTap: () => _exportAllWorkouts(context),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Import Workouts
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.file_upload, color: Colors.green),
+                title: const Text('Import Workouts'),
+                subtitle: const Text('Restore workout configurations'),
+                trailing: const Icon(Icons.chevron_right, size: 20),
+                onTap: () => _importAllWorkouts(context),
               ),
             ),
 

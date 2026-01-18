@@ -73,9 +73,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
           final workouts = provider.workouts;
 
           if (workouts.isEmpty) {
-            return const Center(
-              child: Text('No workouts yet. Create one!'),
-            );
+            return const Center(child: Text('No workouts yet. Create one!'));
           }
 
           return ListView.separated(
@@ -93,7 +91,10 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                   ),
                 ),
                 child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   title: Text(
                     workout.name,
                     style: const TextStyle(fontWeight: FontWeight.bold),
@@ -101,13 +102,18 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                   subtitle: Text('${workout.exercises.length} exercises'),
                   trailing: _isEditMode
                       ? IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.redAccent,
+                          ),
                           onPressed: () {
                             showDialog(
                               context: context,
                               builder: (context) => AlertDialog(
                                 title: const Text('Delete Workout'),
-                                content: Text('Are you sure you want to delete "${workout.name}"?'),
+                                content: Text(
+                                  'Are you sure you want to delete "${workout.name}"?',
+                                ),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(context),
@@ -118,7 +124,10 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                                       provider.deleteWorkout(workout.id);
                                       Navigator.pop(context);
                                     },
-                                    child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+                                    child: const Text(
+                                      'Delete',
+                                      style: TextStyle(color: Colors.redAccent),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -131,7 +140,8 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => WorkoutDetailScreen(workout: workout),
+                        builder: (context) =>
+                            WorkoutDetailScreen(workout: workout),
                       ),
                     );
                   },

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import 'package:lift/models/workout.dart';
 import 'package:lift/models/exercise.dart';
 import 'package:lift/providers/workout_provider.dart';
@@ -74,7 +75,9 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
   }
 
   void _editSets(WorkoutExercise workoutExercise) {
-    final controller = TextEditingController(text: workoutExercise.targetSets.toString());
+    final controller = TextEditingController(
+      text: workoutExercise.targetSets.toString(),
+    );
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -140,6 +143,74 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
     );
   }
 
+  Future<void> _exportWorkout(BuildContext context) async {
+    final provider = context.read<WorkoutProvider>();
+    final result = await provider.exportWorkout(widget.workout);
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Export Result'),
+          content: Text(result),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  void _duplicateWorkout(BuildContext context) {
+    final controller = TextEditingController(
+      text: '${widget.workout.name} (copy)',
+    );
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Duplicate Workout'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'New workout name'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.isNotEmpty) {
+                final provider = context.read<WorkoutProvider>();
+                final newWorkout = Workout.create(name: controller.text);
+
+                // Copy exercises with new IDs
+                newWorkout.exercises.addAll(
+                  widget.workout.exercises.map(
+                    (e) => WorkoutExercise(
+                      id: const Uuid().v4(),
+                      exerciseId: e.exerciseId,
+                      targetSets: e.targetSets,
+                    ),
+                  ),
+                );
+
+                provider.addWorkout(newWorkout);
+                Navigator.pop(context);
+                Navigator.pop(context); // Go back to workouts list
+              }
+            },
+            child: const Text('Duplicate'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -169,6 +240,41 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
             icon: const Icon(Icons.add),
             onPressed: _showAddExerciseBottomSheet,
           ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) async {
+              switch (value) {
+                case 'export':
+                  await _exportWorkout(context);
+                  break;
+                case 'duplicate':
+                  _duplicateWorkout(context);
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'export',
+                child: Row(
+                  children: [
+                    Icon(Icons.file_download, color: Colors.blue),
+                    SizedBox(width: 12),
+                    Text('Export Workout'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'duplicate',
+                child: Row(
+                  children: [
+                    Icon(Icons.content_copy),
+                    SizedBox(width: 12),
+                    Text('Duplicate Workout'),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
       body: Consumer<WorkoutProvider>(
@@ -185,8 +291,16 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
               itemCount: widget.workout.exercises.length,
               itemBuilder: (context, index) {
                 final workoutExercise = widget.workout.exercises[index];
-                final exercise = provider.getExerciseById(workoutExercise.exerciseId);
-                return _buildExerciseCard(workoutExercise, exercise, provider, index, false);
+                final exercise = provider.getExerciseById(
+                  workoutExercise.exerciseId,
+                );
+                return _buildExerciseCard(
+                  workoutExercise,
+                  exercise,
+                  provider,
+                  index,
+                  false,
+                );
               },
             );
           }
@@ -195,12 +309,24 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
             padding: const EdgeInsets.all(16),
             itemCount: widget.workout.exercises.length,
             onReorder: (oldIndex, newIndex) {
-              provider.reorderWorkoutExercise(widget.workout, oldIndex, newIndex);
+              provider.reorderWorkoutExercise(
+                widget.workout,
+                oldIndex,
+                newIndex,
+              );
             },
             itemBuilder: (context, index) {
               final workoutExercise = widget.workout.exercises[index];
-              final exercise = provider.getExerciseById(workoutExercise.exerciseId);
-              return _buildExerciseCard(workoutExercise, exercise, provider, index, true);
+              final exercise = provider.getExerciseById(
+                workoutExercise.exerciseId,
+              );
+              return _buildExerciseCard(
+                workoutExercise,
+                exercise,
+                provider,
+                index,
+                true,
+              );
             },
           );
         },
@@ -271,7 +397,11 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                     tooltip: 'Edit sets',
                   ),
                   IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.redAccent,
+                      size: 20,
+                    ),
                     onPressed: () {
                       setState(() {
                         widget.workout.exercises.removeAt(index);
