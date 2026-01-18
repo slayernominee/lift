@@ -1,0 +1,36 @@
+License: AGPL-3.0
+AuthorName: slayernominee
+AuthorEmail: lift.washday504@simplelogin.com
+WebSite: https://github.com/slayernominee/lift
+SourceCode: https://github.com/slayernominee/lift
+IssueTracker: https://github.com/slayernominee/lift/issues
+Changelog: https://github.com/slayernominee/lift/releases
+Donate: https://github.com/slayernominee/lift
+Summary: Modern workout tracker with offline support
+
+AutoName: Lift
+Name: Lift
+
+RepoType: git
+Repo: https://github.com/slayernominee/lift
+
+Builds:
+  - versionName: "1.0.0"
+    versionCode: 1
+    commit: v1.0.0
+    subdir: android/app
+    gradle:
+      - yes
+    srclibs:
+      - flutter@stable
+    prebuild:
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter pub get
+    build:
+      - $$flutter$$/bin/flutter build apk --release
+    scandelete:
+      - .flutter-plugins-dependencies
+      - .flutter-plugins
+
+CurrentVersion: 1.0.0
+CurrentVersionCode: 1

@@ -1,0 +1,23 @@
+Lift is a modern, high-performance fitness tracker designed for lifters who want a clean, distraction-free interface to manage their workouts and track their strength progress.
+
+<b>Key Features:</b>
+
+• <b>Workout Management:</b> Create custom workout routines, reorder exercises with drag-and-drop, and set target sets
+• <b>Exercise Pool:</b> A searchable database of exercises with support for custom additions
+• <b>Intelligent Tracking:</b> Smart placeholders automatically show your weight/reps from your last session for that specific workout. Focus on your lift without toggling checkboxes
+• <b>Data Visualization:</b>
+  - <i>Repetition History:</i> Scrollable timeline charts showing total volume progress
+  - <i>Weight Tracker:</i> Monitor body weight with a dedicated chart and date/time-specific logs
+  - <i>Interactive Timelines:</i> Swipe through history with range toggles (1W, 1M, 3M, All)
+
+• <b>Modern UI:</b> A sleek, dark-themed interface built using Material 3 and an indigo-slate color palette
+• <b>100% Offline:</b> Works completely offline - no internet connection required for any features
+• <b>Local-First:</b> Fast performance and offline support using Hive NoSQL storage
+
+<b>Privacy & Offline-First:</b>
+
+Lift is designed with your privacy as the top priority. The app works 100% offline, requiring no internet connection. Your data never leaves your device - no cloud sync, no account creation, and no data transmission.
+
+<b>No Data Collection:</b> We don't collect, share, or sell any of your data. No analytics services are used, and you can use the app immediately without creating an account or providing personal information.
+
+Your data stays private. Since everything is stored locally, only you have access to your workout information.

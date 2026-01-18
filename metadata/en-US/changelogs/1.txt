@@ -1,0 +1,8 @@
+Initial release of Lift! Features include:
+- Custom workout routine management with drag-and-drop
+- Searchable exercise database
+- Smart weight/rep placeholders from previous sessions
+- Interactive timeline charts for progress tracking
+- Body weight monitoring with dedicated charts
+- 100% offline with local-first data storage
+- Modern dark-themed Material 3 UI
