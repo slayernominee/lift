@@ -55,6 +55,12 @@
 
 For the complete privacy statement, see [docs/PRIVACY.md](docs/PRIVACY.md).
 
+## Code Signing
+
+The APK is signed with the Key:
+
+`4D:0D:18:E2:6A:ED:B8:32:3B:CD:3C:17:6D:05:D9:98:BC:13:4D:49:E2:BB:13:BE:EC:7D:C8:95:2E:A4:FA:C3`
+
 ## 🚀 Getting Started
 
 ### Prerequisites
