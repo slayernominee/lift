@@ -50,13 +50,64 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               if (nameController.text.isNotEmpty) {
                 final exercise = Exercise.create(
                   name: nameController.text,
-                  muscleGroup: muscleController.text.isEmpty ? null : muscleController.text,
+                  muscleGroup: muscleController.text.isEmpty
+                      ? null
+                      : muscleController.text,
                 );
                 context.read<WorkoutProvider>().addExercise(exercise);
                 Navigator.pop(context);
               }
             },
             child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditExerciseDialog(BuildContext context, Exercise exercise) {
+    final nameController = TextEditingController(text: exercise.name);
+    final muscleController = TextEditingController(
+      text: exercise.muscleGroup ?? '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Exercise'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              autofocus: true,
+              decoration: const InputDecoration(hintText: 'Exercise Name'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: muscleController,
+              decoration: const InputDecoration(hintText: 'Muscle Group'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (nameController.text.isNotEmpty) {
+                exercise.name = nameController.text;
+                exercise.muscleGroup = muscleController.text.isEmpty
+                    ? null
+                    : muscleController.text;
+                exercise.save();
+                setState(() {});
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Save'),
           ),
         ],
       ),
@@ -81,7 +132,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                fillColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceVariant.withOpacity(0.5),
                 contentPadding: EdgeInsets.zero,
               ),
               onChanged: (value) {
@@ -101,15 +154,11 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
           }).toList();
 
           if (exercises.isEmpty && _searchQuery.isEmpty) {
-            return const Center(
-              child: Text('No exercises found. Add some!'),
-            );
+            return const Center(child: Text('No exercises found. Add some!'));
           }
 
           if (exercises.isEmpty && _searchQuery.isNotEmpty) {
-            return const Center(
-              child: Text('No exercises match your search.'),
-            );
+            return const Center(child: Text('No exercises match your search.'));
           }
 
           return ListView.separated(
@@ -135,7 +184,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                     context: context,
                     builder: (context) => AlertDialog(
                       title: const Text('Delete Exercise'),
-                      content: Text('Are you sure you want to delete "${exercise.name}"?'),
+                      content: Text(
+                        'Are you sure you want to delete "${exercise.name}"?',
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context, false),
@@ -143,7 +194,10 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+                          child: const Text(
+                            'Delete',
+                            style: TextStyle(color: Colors.redAccent),
+                          ),
                         ),
                       ],
                     ),
@@ -153,7 +207,10 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                   exercise.delete();
                   setState(() {});
                 },
-                child: _ExerciseCard(exercise: exercise),
+                child: _ExerciseCard(
+                  exercise: exercise,
+                  onTap: () => _showEditExerciseDialog(context, exercise),
+                ),
               );
             },
           );
@@ -170,8 +227,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
 
 class _ExerciseCard extends StatelessWidget {
   final Exercise exercise;
+  final VoidCallback? onTap;
 
-  const _ExerciseCard({required this.exercise});
+  const _ExerciseCard({required this.exercise, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -184,6 +242,7 @@ class _ExerciseCard extends StatelessWidget {
         ),
       ),
       child: ListTile(
+        onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         title: Text(
           exercise.name,

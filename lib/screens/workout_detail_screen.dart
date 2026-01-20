@@ -16,7 +16,7 @@ class WorkoutDetailScreen extends StatefulWidget {
 }
 
 class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
-  bool _isEditMode = false;
+  bool _isReorderMode = false;
 
   void _showAddExerciseBottomSheet() {
     final provider = context.read<WorkoutProvider>();
@@ -228,11 +228,13 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(_isEditMode ? Icons.check : Icons.edit),
-            color: _isEditMode ? Theme.of(context).colorScheme.primary : null,
+            icon: Icon(_isReorderMode ? Icons.check : Icons.swap_vert),
+            color: _isReorderMode
+                ? Theme.of(context).colorScheme.primary
+                : null,
             onPressed: () {
               setState(() {
-                _isEditMode = !_isEditMode;
+                _isReorderMode = !_isReorderMode;
               });
             },
           ),
@@ -285,10 +287,17 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
             );
           }
 
-          if (!_isEditMode) {
-            return ListView.builder(
+          if (_isReorderMode) {
+            return ReorderableListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: widget.workout.exercises.length,
+              onReorder: (oldIndex, newIndex) {
+                provider.reorderWorkoutExercise(
+                  widget.workout,
+                  oldIndex,
+                  newIndex,
+                );
+              },
               itemBuilder: (context, index) {
                 final workoutExercise = widget.workout.exercises[index];
                 final exercise = provider.getExerciseById(
@@ -299,22 +308,14 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                   exercise,
                   provider,
                   index,
-                  false,
                 );
               },
             );
           }
 
-          return ReorderableListView.builder(
+          return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: widget.workout.exercises.length,
-            onReorder: (oldIndex, newIndex) {
-              provider.reorderWorkoutExercise(
-                widget.workout,
-                oldIndex,
-                newIndex,
-              );
-            },
             itemBuilder: (context, index) {
               final workoutExercise = widget.workout.exercises[index];
               final exercise = provider.getExerciseById(
@@ -325,7 +326,6 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                 exercise,
                 provider,
                 index,
-                true,
               );
             },
           );
@@ -339,98 +339,129 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
     Exercise? exercise,
     WorkoutProvider provider,
     int index,
-    bool isEditMode,
   ) {
-    return Card(
+    return Dismissible(
       key: ValueKey(workoutExercise.id),
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-          width: 1,
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(
+          color: Colors.redAccent,
+          borderRadius: BorderRadius.circular(16),
         ),
+        child: const Icon(Icons.delete, color: Colors.white),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-        title: Text(
-          exercise?.name ?? 'Unknown Exercise',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  '${workoutExercise.targetSets} sets',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Remove Exercise'),
+            content: Text(
+              'Are you sure you want to remove "${exercise?.name ?? 'this exercise'}" from the workout?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  'Remove',
+                  style: TextStyle(color: Colors.redAccent),
                 ),
               ),
-              if (exercise?.muscleGroup != null) ...[
-                const SizedBox(width: 8),
-                Text(
-                  exercise!.muscleGroup!,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ],
             ],
           ),
+        );
+      },
+      onDismissed: (direction) {
+        setState(() {
+          widget.workout.exercises.removeAt(index);
+          provider.updateWorkout(widget.workout);
+        });
+      },
+      child: Card(
+        key: ValueKey(workoutExercise.id),
+        margin: const EdgeInsets.only(bottom: 12),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            width: 1,
+          ),
         ),
-        trailing: isEditMode
-            ? Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.settings_outlined, size: 20),
-                    onPressed: () => _editSets(workoutExercise),
-                    tooltip: 'Edit sets',
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.redAccent,
-                      size: 20,
+        child: ListTile(
+          contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+          title: Text(
+            exercise?.name ?? 'Unknown Exercise',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => _editSets(workoutExercise),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
                     ),
-                    onPressed: () {
-                      setState(() {
-                        widget.workout.exercises.removeAt(index);
-                        provider.updateWorkout(widget.workout);
-                      });
-                    },
-                    tooltip: 'Remove exercise',
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '${workoutExercise.targetSets} sets',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                  const Icon(Icons.drag_handle, color: Colors.grey),
+                ),
+                if (exercise?.muscleGroup != null) ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    exercise!.muscleGroup!,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                 ],
-              )
-            : Icon(
-                Icons.chevron_right,
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              ],
+            ),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_isReorderMode)
+                const Icon(Icons.drag_handle, color: Colors.grey)
+              else
+                Icon(
+                  Icons.chevron_right,
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                ),
+            ],
+          ),
+          onTap: () {
+            if (_isReorderMode) return;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ExerciseTrackingScreen(
+                  workout: widget.workout,
+                  workoutExercise: workoutExercise,
+                  exercise: exercise!,
+                ),
               ),
-        onTap: isEditMode
-            ? null
-            : () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ExerciseTrackingScreen(
-                      workout: widget.workout,
-                      workoutExercise: workoutExercise,
-                      exercise: exercise!,
-                    ),
-                  ),
-                );
-              },
+            );
+          },
+        ),
       ),
     );
   }
