@@ -31,6 +31,22 @@ Builds:
     scandelete:
       - .flutter-plugins-dependencies
       - .flutter-plugins
+  - versionName: "1.2.0"
+    versionCode: 3
+    commit: v1.2.0
+    subdir: android/app
+    gradle:
+      - yes
+    srclibs:
+      - flutter@stable
+    prebuild:
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter pub get
+    build:
+      - $$flutter$$/bin/flutter build apk --release
+    scandelete:
+      - .flutter-plugins-dependencies
+      - .flutter-plugins
 
-CurrentVersion: 1.0.0
-CurrentVersionCode: 1
+CurrentVersion: 1.2.0
+CurrentVersionCode: 3
