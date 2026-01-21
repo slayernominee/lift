@@ -273,6 +273,55 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
 
+            // Credits Section
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.favorite, size: 20, color: Colors.red[400]),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Credits',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Exercise data from a fork of ExerciseDB by ASCENDAPI.',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Special thanks to ASCENDAPI for allowing us to use their exercise database in this offline-focused app.',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: () => _launchURL('https://www.ascendapi.com/'),
+                      child: const Text(
+                        'Visit ASCENDAPI',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
             // Source Code Card
             Card(
               child: ListTile(

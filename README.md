@@ -36,6 +36,15 @@
 - **Charts**: [fl_chart](https://pub.dev/packages/fl_chart)
 - **Icons**: Material Icons & Font Awesome
 
+## 🙏 Credits
+
+This project uses exercise data from a fork of [ExerciseDB by ASCENDAPI](https://www.ascendapi.com/).
+
+- **ASCENDAPI**: The original ExerciseDB project was developed by ASCENDAPI. Although this is a fork under the AGPL-3.0 License, we have received explicit permission from ASCENDAPI to use this data in our project.
+- **Gratitude**: Many thanks to ASCENDAPI for enabling this project with their comprehensive exercise database and for allowing us to use it in our offline-focused application.
+
+If you need access to a more extensive Exercise Database, consider using [their API](https://www.ascendapi.com/) directly. They provide even more exercises than what's included in this app.
+
 ## 🔒 Privacy & Offline-First
 
 **Lift is designed with your privacy as the top priority.**
