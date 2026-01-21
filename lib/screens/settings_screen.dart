@@ -6,6 +6,52 @@ import 'package:lift/providers/workout_provider.dart';
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
+  Future<void> _resetApp(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset App'),
+        content: const Text(
+          'This will delete all your data including workouts, exercises, logs, and weight entries. This action cannot be undone.\n\nAre you sure you want to continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete All Data'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        await context.read<WorkoutProvider>().resetAllData();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('All data has been reset successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to reset data: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   Future<void> _exportAllWorkouts(BuildContext context) async {
     final provider = context.read<WorkoutProvider>();
     final result = await provider.exportWorkouts();
@@ -132,6 +178,29 @@ class SettingsScreen extends StatelessWidget {
                 subtitle: const Text('Export logs to CSV'),
                 trailing: const Icon(Icons.chevron_right, size: 20),
                 onTap: () => _exportLogs(context),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Reset App
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.restore_rounded, color: Colors.red),
+                title: const Text(
+                  'Reset App',
+                  style: TextStyle(color: Colors.red),
+                ),
+                subtitle: const Text(
+                  'Delete all data and restore defaults',
+                  style: TextStyle(color: Colors.red),
+                ),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: Colors.red,
+                ),
+                onTap: () => _resetApp(context),
               ),
             ),
 

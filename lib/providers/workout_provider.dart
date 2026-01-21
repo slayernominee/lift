@@ -421,6 +421,26 @@ class WorkoutProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // --- Data Reset Methods ---
+  Future<void> resetAllData() async {
+    // Clear all Hive boxes
+    await _exerciseBox.clear();
+    await _workoutBox.clear();
+    await _weightBox.clear();
+
+    // Clear all logs from SQLite database
+    final db = await DatabaseHelper.instance.database;
+    await db.delete('set_logs');
+
+    // Clear in-memory logs
+    _logs.clear();
+
+    // Re-initialize default exercises
+    _initDefaults();
+
+    notifyListeners();
+  }
+
   // --- Initial Defaults ---
   void _initDefaults() {
     if (_exerciseBox.isEmpty) {
