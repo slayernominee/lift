@@ -393,10 +393,10 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                         ),
                       ),
                     ),
-                    if (exercise?.muscleGroup != null) ...[
+                    if (exercise?.targetMuscles.isNotEmpty ?? false) ...[
                       const SizedBox(width: 8),
                       Text(
-                        exercise!.muscleGroup!,
+                        exercise!.targetMuscles.join(', '),
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.grey,

@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:lift/providers/workout_provider.dart';
 import 'package:lift/models/exercise.dart';
+import 'package:lift/widgets/multi_select_widgets.dart';
 
 class ExercisesScreen extends StatefulWidget {
   final void Function(Exercise)? onSelect;
@@ -15,76 +18,181 @@ class ExercisesScreen extends StatefulWidget {
 class _ExercisesScreenState extends State<ExercisesScreen> {
   String _searchQuery = '';
 
+  // List data from JSON files
+  List<String> _allMuscles = [];
+  List<String> _allBodyParts = [];
+  List<String> _allEquipment = [];
+  bool _isLoadingData = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadJsonData();
+  }
+
+  Future<void> _loadJsonData() async {
+    try {
+      final musclesJson = await rootBundle.loadString(
+        'assets/exercises/muscles.json',
+      );
+      final bodyPartsJson = await rootBundle.loadString(
+        'assets/exercises/bodyparts.json',
+      );
+      final equipmentJson = await rootBundle.loadString(
+        'assets/exercises/equipments.json',
+      );
+
+      final musclesList = json.decode(musclesJson) as List;
+      final bodyPartsList = json.decode(bodyPartsJson) as List;
+      final equipmentList = json.decode(equipmentJson) as List;
+
+      setState(() {
+        _allMuscles = musclesList.map((e) => e['name'] as String).toList();
+        _allBodyParts = bodyPartsList.map((e) => e['name'] as String).toList();
+        _allEquipment = equipmentList.map((e) => e['name'] as String).toList();
+        _isLoadingData = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingData = false;
+      });
+    }
+  }
+
   void _showAddExerciseDialog(BuildContext context) {
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
-    final muscleController = TextEditingController();
-    final equipmentController = TextEditingController();
+    final gifAssetController = TextEditingController();
+    List<String> selectedTargetMuscles = [];
+    List<String> selectedEquipment = [];
+    List<String> selectedBodyParts = [];
+    List<String> selectedSecondaryMuscles = [];
+    List<String> instructions = [];
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('New Exercise'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              autofocus: true,
-              decoration: const InputDecoration(
-                hintText: 'Exercise Name (e.g. Bench Press)',
-              ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('New Exercise'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Exercise Name (e.g. Bench Press)',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    hintText: 'Description (optional)',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                MultiSelectField(
+                  label: 'Target Muscles',
+                  selectedItems: selectedTargetMuscles,
+                  allItems: _allMuscles,
+                  isLoading: _isLoadingData,
+                  onSelectionChanged: (items) {
+                    setState(() {
+                      selectedTargetMuscles = items;
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                MultiSelectField(
+                  label: 'Equipment',
+                  selectedItems: selectedEquipment,
+                  allItems: _allEquipment,
+                  isLoading: _isLoadingData,
+                  onSelectionChanged: (items) {
+                    setState(() {
+                      selectedEquipment = items;
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                MultiSelectField(
+                  label: 'Body Parts',
+                  selectedItems: selectedBodyParts,
+                  allItems: _allBodyParts,
+                  isLoading: _isLoadingData,
+                  onSelectionChanged: (items) {
+                    setState(() {
+                      selectedBodyParts = items;
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                MultiSelectField(
+                  label: 'Secondary Muscles',
+                  selectedItems: selectedSecondaryMuscles,
+                  allItems: _allMuscles,
+                  isLoading: _isLoadingData,
+                  onSelectionChanged: (items) {
+                    setState(() {
+                      selectedSecondaryMuscles = items;
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                InstructionsField(
+                  instructions: instructions,
+                  onChanged: (newInstructions) {
+                    setState(() {
+                      instructions.clear();
+                      instructions.addAll(newInstructions);
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: gifAssetController,
+                  decoration: const InputDecoration(
+                    hintText: 'GIF Asset Path (optional)',
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: descriptionController,
-              decoration: const InputDecoration(
-                hintText: 'Description (optional)',
-              ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: muscleController,
-              decoration: const InputDecoration(
-                hintText: 'Muscle Group (e.g. Chest)',
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: equipmentController,
-              decoration: const InputDecoration(
-                hintText: 'Equipment (e.g. Dumbbells, Barbell)',
-              ),
+            ElevatedButton(
+              onPressed: () {
+                if (nameController.text.isNotEmpty) {
+                  final exercise = Exercise.create(
+                    name: nameController.text,
+                    description: descriptionController.text.isEmpty
+                        ? null
+                        : descriptionController.text,
+                    targetMuscles: selectedTargetMuscles.isEmpty
+                        ? ['Other']
+                        : selectedTargetMuscles,
+                    equipment: selectedEquipment,
+                    bodyParts: selectedBodyParts,
+                    secondaryMuscles: selectedSecondaryMuscles,
+                    instructions: instructions,
+                    gifAsset: gifAssetController.text.isEmpty
+                        ? null
+                        : gifAssetController.text,
+                  );
+                  context.read<WorkoutProvider>().addExercise(exercise);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Create'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty) {
-                final exercise = Exercise.create(
-                  name: nameController.text,
-                  description: descriptionController.text.isEmpty
-                      ? null
-                      : descriptionController.text,
-                  muscleGroup: muscleController.text.isEmpty
-                      ? null
-                      : muscleController.text,
-                  equipment: equipmentController.text.isEmpty
-                      ? null
-                      : equipmentController.text,
-                );
-                context.read<WorkoutProvider>().addExercise(exercise);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Create'),
-          ),
-        ],
       ),
     );
   }
@@ -94,68 +202,134 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     final descriptionController = TextEditingController(
       text: exercise.description ?? '',
     );
-    final muscleController = TextEditingController(
-      text: exercise.muscleGroup ?? '',
+    final gifAssetController = TextEditingController(
+      text: exercise.gifAsset ?? '',
     );
-    final equipmentController = TextEditingController(
-      text: exercise.equipment ?? '',
+    List<String> selectedTargetMuscles = List.from(exercise.targetMuscles);
+    List<String> selectedEquipment = List.from(exercise.equipment);
+    List<String> selectedBodyParts = List.from(exercise.bodyParts);
+    List<String> selectedSecondaryMuscles = List.from(
+      exercise.secondaryMuscles,
     );
+    List<String> instructions = List.from(exercise.instructions);
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Exercise'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              autofocus: true,
-              decoration: const InputDecoration(hintText: 'Exercise Name'),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Edit Exercise'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  autofocus: true,
+                  decoration: const InputDecoration(hintText: 'Exercise Name'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(hintText: 'Description'),
+                ),
+                const SizedBox(height: 8),
+                MultiSelectField(
+                  label: 'Target Muscles',
+                  selectedItems: selectedTargetMuscles,
+                  allItems: _allMuscles,
+                  isLoading: _isLoadingData,
+                  onSelectionChanged: (items) {
+                    setState(() {
+                      selectedTargetMuscles = items;
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                MultiSelectField(
+                  label: 'Equipment',
+                  selectedItems: selectedEquipment,
+                  allItems: _allEquipment,
+                  isLoading: _isLoadingData,
+                  onSelectionChanged: (items) {
+                    setState(() {
+                      selectedEquipment = items;
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                MultiSelectField(
+                  label: 'Body Parts',
+                  selectedItems: selectedBodyParts,
+                  allItems: _allBodyParts,
+                  isLoading: _isLoadingData,
+                  onSelectionChanged: (items) {
+                    setState(() {
+                      selectedBodyParts = items;
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                MultiSelectField(
+                  label: 'Secondary Muscles',
+                  selectedItems: selectedSecondaryMuscles,
+                  allItems: _allMuscles,
+                  isLoading: _isLoadingData,
+                  onSelectionChanged: (items) {
+                    setState(() {
+                      selectedSecondaryMuscles = items;
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                InstructionsField(
+                  instructions: instructions,
+                  onChanged: (newInstructions) {
+                    setState(() {
+                      instructions.clear();
+                      instructions.addAll(newInstructions);
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: gifAssetController,
+                  decoration: const InputDecoration(hintText: 'GIF Asset Path'),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: descriptionController,
-              decoration: const InputDecoration(hintText: 'Description'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: muscleController,
-              decoration: const InputDecoration(hintText: 'Muscle Group'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: equipmentController,
-              decoration: const InputDecoration(hintText: 'Equipment'),
+            ElevatedButton(
+              onPressed: () {
+                if (nameController.text.isNotEmpty) {
+                  exercise.name = nameController.text;
+                  exercise.description = descriptionController.text.isEmpty
+                      ? null
+                      : descriptionController.text;
+                  exercise.targetMuscles = selectedTargetMuscles.isEmpty
+                      ? ['Other']
+                      : selectedTargetMuscles;
+                  exercise.equipment = selectedEquipment;
+                  exercise.bodyParts = selectedBodyParts;
+                  exercise.secondaryMuscles = selectedSecondaryMuscles;
+                  exercise.instructions = instructions;
+                  exercise.gifAsset = gifAssetController.text.isEmpty
+                      ? null
+                      : gifAssetController.text;
+                  exercise.save();
+                  setState(() {});
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Save'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty) {
-                exercise.name = nameController.text;
-                exercise.description = descriptionController.text.isEmpty
-                    ? null
-                    : descriptionController.text;
-                exercise.muscleGroup = muscleController.text.isEmpty
-                    ? null
-                    : muscleController.text;
-                exercise.equipment = equipmentController.text.isEmpty
-                    ? null
-                    : equipmentController.text;
-                exercise.save();
-                setState(() {});
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
       ),
     );
   }
@@ -198,9 +372,18 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
         builder: (context, provider, child) {
           final exercises = provider.exercises.where((e) {
             return e.name.toLowerCase().contains(_searchQuery) ||
-                (e.muscleGroup?.toLowerCase().contains(_searchQuery) ??
-                    false) ||
-                (e.equipment?.toLowerCase().contains(_searchQuery) ?? false);
+                e.targetMuscles.any(
+                  (m) => m.toLowerCase().contains(_searchQuery),
+                ) ||
+                e.equipment.any(
+                  (eq) => eq.toLowerCase().contains(_searchQuery),
+                ) ||
+                e.bodyParts.any(
+                  (bp) => bp.toLowerCase().contains(_searchQuery),
+                ) ||
+                e.secondaryMuscles.any(
+                  (sm) => sm.toLowerCase().contains(_searchQuery),
+                );
           }).toList();
 
           if (exercises.isEmpty && _searchQuery.isEmpty) {
@@ -211,10 +394,10 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
             return const Center(child: Text('No exercises match your search.'));
           }
 
-          // Group exercises by muscle group
+          // Group exercises by primary target muscle
           final groupedExercises = <String, List<Exercise>>{};
           for (var exercise in exercises) {
-            final group = exercise.muscleGroup ?? 'Other';
+            final group = exercise.primaryTargetMuscle;
             groupedExercises.putIfAbsent(group, () => []).add(exercise);
           }
 
@@ -349,52 +532,69 @@ class _ExerciseCard extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: exercise.gifAsset != null
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  exercise.gifAsset!,
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.fitness_center,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 30,
+                    ),
+                  ),
+                ),
+              )
+            : null,
         title: Text(
           exercise.name,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        subtitle:
-            (exercise.muscleGroup != null ||
-                exercise.equipment != null ||
-                (exercise.description != null &&
-                    exercise.description!.isNotEmpty))
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (exercise.muscleGroup != null)
-                    Text(
-                      exercise.muscleGroup!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  if (exercise.equipment != null)
-                    Text(
-                      exercise.equipment!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withOpacity(0.7),
-                        fontSize: 12,
-                      ),
-                    ),
-                  if (exercise.description != null &&
-                      exercise.description!.isNotEmpty)
-                    Text(
-                      exercise.description!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 12,
-                      ),
-                    ),
-                ],
-              )
-            : null,
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (exercise.targetMuscles.isNotEmpty)
+              Text(
+                exercise.targetMuscles.join(', '),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontSize: 12,
+                ),
+              ),
+            if (exercise.equipment.isNotEmpty)
+              Text(
+                exercise.equipment.join(', '),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                  fontSize: 11,
+                ),
+              ),
+            if (exercise.description != null &&
+                exercise.description!.isNotEmpty)
+              Text(
+                exercise.description!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 11,
+                ),
+              ),
+          ],
+        ),
         trailing: Icon(
           Icons.chevron_right,
           color: Theme.of(context).colorScheme.primary.withOpacity(0.5),

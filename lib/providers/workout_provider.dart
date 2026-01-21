@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lift/models/exercise.dart';
 import 'package:lift/models/workout.dart';
@@ -442,110 +442,162 @@ class WorkoutProvider with ChangeNotifier {
   }
 
   // --- Initial Defaults ---
-  void _initDefaults() {
+  Future<void> _initDefaults() async {
     if (_exerciseBox.isEmpty) {
-      final defaultExercises = [
-        Exercise.create(
-          name: 'Bench Press',
-          muscleGroup: 'Chest',
-          description: 'Compound exercise for chest, shoulders, and triceps.',
-          equipment: 'Barbell',
-        ),
-        Exercise.create(
-          name: 'Squat',
-          muscleGroup: 'Legs',
-          description: 'Compound exercise for quads, hamstrings, and glutes.',
-          equipment: 'Barbell',
-        ),
-        Exercise.create(
-          name: 'Deadlift',
-          muscleGroup: 'Back',
-          description:
-              'Full body compound movement focusing on posterior chain.',
-          equipment: 'Barbell',
-        ),
-        Exercise.create(
-          name: 'Overhead Press',
-          muscleGroup: 'Shoulders',
-          description: 'Vertical push exercise for shoulders and triceps.',
-          equipment: 'Barbell',
-        ),
-        Exercise.create(
-          name: 'Barbell Row',
-          muscleGroup: 'Back',
-          description: 'Horizontal pull exercise for back thickness.',
-          equipment: 'Barbell',
-        ),
-        Exercise.create(
-          name: 'Pull Ups',
-          muscleGroup: 'Back',
-          description: 'Vertical pull exercise for back width and biceps.',
-          equipment: 'Pull-up bar',
-        ),
-        Exercise.create(
-          name: 'Bicep Curl',
-          muscleGroup: 'Arms',
-          description: 'Isolation exercise for biceps.',
-          equipment: 'Dumbbells',
-        ),
-        Exercise.create(
-          name: 'Tricep Extension',
-          muscleGroup: 'Arms',
-          description: 'Isolation exercise for triceps.',
-          equipment: 'Dumbbells',
-        ),
-        Exercise.create(
-          name: 'Lunges',
-          muscleGroup: 'Legs',
-          description: 'Unilateral leg exercise for quads and glutes.',
-          equipment: 'Bodyweight',
-        ),
-        Exercise.create(
-          name: 'Lateral Raises',
-          muscleGroup: 'Shoulders',
-          description: 'Isolation exercise for side delts.',
-          equipment: 'Dumbbells',
-        ),
-        Exercise.create(
-          name: 'Plank',
-          muscleGroup: 'Core',
-          description: 'Isometric core stability exercise.',
-          equipment: 'Bodyweight',
-        ),
-      ];
-      for (var e in defaultExercises) {
+      // Load exercises from assets/exercises/exercises.json
+      final exercises = await _loadExercisesFromAssets();
+      for (var e in exercises) {
         _exerciseBox.put(e.id, e);
       }
+    }
 
-      if (_workoutBox.isEmpty) {
-        final fullBody = Workout.create(name: 'Full Body Session');
-        fullBody.exercises.addAll([
-          WorkoutExercise.create(exerciseId: defaultExercises[1].id), // Squat
-          WorkoutExercise.create(exerciseId: defaultExercises[0].id), // Bench
-          WorkoutExercise.create(
-            exerciseId: defaultExercises[2].id,
-          ), // Deadlift
-          WorkoutExercise.create(exerciseId: defaultExercises[10].id), // Plank
-        ]);
-        _workoutBox.put(fullBody.id, fullBody);
+    // Create sample workouts from loaded exercises
+    if (_workoutBox.isEmpty) {
+      await _createSampleWorkouts();
+    }
+  }
 
-        final upperBody = Workout.create(name: 'Upper Body Power');
-        upperBody.exercises.addAll([
-          WorkoutExercise.create(
-            exerciseId: defaultExercises[3].id,
-          ), // OH Press
-          WorkoutExercise.create(
-            exerciseId: defaultExercises[5].id,
-          ), // Pull Ups
-          WorkoutExercise.create(
-            exerciseId: defaultExercises[6].id,
-          ), // Bicep Curls
-          WorkoutExercise.create(
-            exerciseId: defaultExercises[7].id,
-          ), // Tricep Ext
-        ]);
-        _workoutBox.put(upperBody.id, upperBody);
-      }
+  Future<void> _createSampleWorkouts() async {
+    final exercises = _exerciseBox.values.toList();
+    if (exercises.isEmpty) return;
+
+    // Full Body Workout
+    final fullBody = Workout.create(name: 'Full Body Session');
+
+    // Find some exercises for full body
+    final squat = exercises.firstWhere(
+      (e) => e.targetMuscles.contains('quadriceps'),
+      orElse: () => exercises[0],
+    );
+    final benchPress = exercises.firstWhere(
+      (e) =>
+          e.targetMuscles.contains('pectorals') ||
+          e.targetMuscles.contains('chest'),
+      orElse: () => exercises.length > 1 ? exercises[1] : exercises[0],
+    );
+    final plank = exercises.firstWhere(
+      (e) =>
+          e.targetMuscles.contains('abdominals') ||
+          e.targetMuscles.contains('abs'),
+      orElse: () => exercises.length > 2 ? exercises[2] : exercises[0],
+    );
+    final deadlift = exercises.firstWhere(
+      (e) =>
+          e.targetMuscles.contains('lower back') ||
+          e.targetMuscles.contains('glutes'),
+      orElse: () => exercises.length > 3 ? exercises[3] : exercises[0],
+    );
+
+    fullBody.exercises.addAll([
+      WorkoutExercise.create(exerciseId: squat.id),
+      WorkoutExercise.create(exerciseId: benchPress.id),
+      WorkoutExercise.create(exerciseId: deadlift.id),
+      WorkoutExercise.create(exerciseId: plank.id),
+    ]);
+    _workoutBox.put(fullBody.id, fullBody);
+
+    // Upper Body Workout
+    final upperBody = Workout.create(name: 'Upper Body Power');
+
+    final overheadPress = exercises.firstWhere(
+      (e) =>
+          e.targetMuscles.contains('deltoids') ||
+          e.targetMuscles.contains('shoulders'),
+      orElse: () => exercises.length > 4 ? exercises[4] : exercises[0],
+    );
+    final pullUps = exercises.firstWhere(
+      (e) =>
+          e.targetMuscles.contains('latissimus dorsi') ||
+          e.targetMuscles.contains('lats'),
+      orElse: () => exercises.length > 5 ? exercises[5] : exercises[0],
+    );
+    final bicepCurl = exercises.firstWhere(
+      (e) => e.targetMuscles.contains('biceps'),
+      orElse: () => exercises.length > 6 ? exercises[6] : exercises[0],
+    );
+    final tricepExtension = exercises.firstWhere(
+      (e) => e.targetMuscles.contains('triceps'),
+      orElse: () => exercises.length > 7 ? exercises[7] : exercises[0],
+    );
+
+    upperBody.exercises.addAll([
+      WorkoutExercise.create(exerciseId: overheadPress.id),
+      WorkoutExercise.create(exerciseId: pullUps.id),
+      WorkoutExercise.create(exerciseId: bicepCurl.id),
+      WorkoutExercise.create(exerciseId: tricepExtension.id),
+    ]);
+    _workoutBox.put(upperBody.id, upperBody);
+
+    // Lower Body Workout
+    final lowerBody = Workout.create(name: 'Lower Body Power');
+
+    final lunge = exercises.firstWhere(
+      (e) =>
+          e.targetMuscles.contains('quadriceps') ||
+          e.targetMuscles.contains('glutes'),
+      orElse: () => exercises.length > 8 ? exercises[8] : exercises[0],
+    );
+    final legPress = exercises.firstWhere(
+      (e) =>
+          e.targetMuscles.contains('quadriceps') &&
+          e.bodyParts.contains('upper legs'),
+      orElse: () => exercises.length > 9 ? exercises[9] : exercises[0],
+    );
+    final calfRaise = exercises.firstWhere(
+      (e) =>
+          e.targetMuscles.contains('calves') ||
+          e.targetMuscles.contains('soleus'),
+      orElse: () => exercises.length > 10 ? exercises[10] : exercises[0],
+    );
+    final legExtension = exercises.firstWhere(
+      (e) =>
+          e.targetMuscles.contains('quadriceps') &&
+          e.bodyParts.contains('upper legs'),
+      orElse: () => exercises.length > 11 ? exercises[11] : exercises[0],
+    );
+
+    lowerBody.exercises.addAll([
+      WorkoutExercise.create(exerciseId: lunge.id),
+      WorkoutExercise.create(exerciseId: legPress.id),
+      WorkoutExercise.create(exerciseId: calfRaise.id),
+      WorkoutExercise.create(exerciseId: legExtension.id),
+    ]);
+    _workoutBox.put(lowerBody.id, lowerBody);
+  }
+
+  Future<List<Exercise>> _loadExercisesFromAssets() async {
+    try {
+      final jsonString = await rootBundle.loadString(
+        'assets/exercises/exercises.json',
+      );
+      final List<dynamic> jsonList = json.decode(jsonString) as List;
+
+      return jsonList.map((json) {
+        return Exercise(
+          id: json['exerciseId'] as String,
+          name: json['name'] as String,
+          description: null,
+          targetMuscles: (json['targetMuscles'] as List)
+              .map((e) => e as String)
+              .toList(),
+          equipment: (json['equipments'] as List)
+              .map((e) => e as String)
+              .toList(),
+          bodyParts: (json['bodyParts'] as List)
+              .map((e) => e as String)
+              .toList(),
+          secondaryMuscles: (json['secondaryMuscles'] as List)
+              .map((e) => e as String)
+              .toList(),
+          instructions: (json['instructions'] as List)
+              .map((e) => e as String)
+              .toList(),
+          gifAsset: 'assets/exercises/media/${json['exerciseId']}.gif',
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('Error loading exercises from assets: $e');
+      return [];
     }
   }
 }

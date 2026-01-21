@@ -37,7 +37,11 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
 
   void _loadLog() {
     final provider = context.read<WorkoutProvider>();
-    final log = provider.getLog(widget.exercise.id, widget.workout.id, _selectedDate);
+    final log = provider.getLog(
+      widget.exercise.id,
+      widget.workout.id,
+      _selectedDate,
+    );
     _lastLog = provider.getLastLog(widget.exercise.id, widget.workout.id);
 
     setState(() {
@@ -79,12 +83,11 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.exercise.name),
-      ),
+      appBar: AppBar(title: Text(widget.exercise.name)),
       body: Column(
         children: [
           _buildDateSwitcher(),
+          _buildExerciseDetails(),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),
@@ -116,7 +119,9 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.2),
         border: Border(
-          bottom: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+          bottom: BorderSide(
+            color: Theme.of(context).dividerColor.withOpacity(0.1),
+          ),
         ),
       ),
       child: Row(
@@ -124,7 +129,8 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
         children: [
           IconButton(
             icon: const Icon(Icons.chevron_left),
-            onPressed: () => _updateDate(_selectedDate.subtract(const Duration(days: 1))),
+            onPressed: () =>
+                _updateDate(_selectedDate.subtract(const Duration(days: 1))),
           ),
           InkWell(
             onTap: () async {
@@ -140,12 +146,17 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
               children: [
                 Text(
                   DateFormat('EEEE, MMM d').format(_selectedDate),
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 Text(
                   isToday ? 'Today' : 'Change Date',
                   style: TextStyle(
-                    color: isToday ? Theme.of(context).colorScheme.primary : Colors.grey,
+                    color: isToday
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey,
                     fontSize: 12,
                     fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
                   ),
@@ -155,7 +166,201 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.chevron_right),
-            onPressed: () => _updateDate(_selectedDate.add(const Duration(days: 1))),
+            onPressed: () =>
+                _updateDate(_selectedDate.add(const Duration(days: 1))),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExerciseDetails() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // GIF if available
+          if (widget.exercise.gifAsset != null)
+            Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  widget.exercise.gifAsset!,
+                  height: 200,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 200,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.fitness_center,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 60,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          if (widget.exercise.gifAsset != null) const SizedBox(height: 16),
+
+          // Description
+          if (widget.exercise.description != null &&
+              widget.exercise.description!.isNotEmpty) ...[
+            Text(
+              widget.exercise.description!,
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // Target Muscles
+          if (widget.exercise.targetMuscles.isNotEmpty)
+            _buildInfoSection(
+              'Target Muscles',
+              Icons.adjust,
+              widget.exercise.targetMuscles,
+            ),
+
+          // Secondary Muscles
+          if (widget.exercise.secondaryMuscles.isNotEmpty)
+            _buildInfoSection(
+              'Secondary Muscles',
+              Icons.fitness_center,
+              widget.exercise.secondaryMuscles,
+            ),
+
+          // Equipment
+          if (widget.exercise.equipment.isNotEmpty)
+            _buildInfoSection(
+              'Equipment',
+              Icons.sports_gymnastics,
+              widget.exercise.equipment,
+            ),
+
+          // Body Parts
+          if (widget.exercise.bodyParts.isNotEmpty)
+            _buildInfoSection(
+              'Body Parts',
+              Icons.accessibility,
+              widget.exercise.bodyParts,
+            ),
+
+          // Instructions
+          if (widget.exercise.instructions.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(
+                  Icons.edit,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Instructions',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: TextField(
+                controller: TextEditingController(
+                  text: widget.exercise.instructionsAsText,
+                ),
+                maxLines: null,
+                keyboardType: TextInputType.multiline,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceVariant.withOpacity(0.3),
+                ),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
+                ),
+                readOnly: true,
+              ),
+            ),
+          ],
+
+          const Divider(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoSection(String title, IconData icon, List<String> items) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.adjust,
+                size: 20,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.only(left: 28),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: items.map((item) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    item,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
           ),
         ],
       ),
@@ -167,9 +372,42 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       child: Row(
         children: const [
-          Expanded(flex: 1, child: Text('SET', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey))),
-          Expanded(flex: 3, child: Text('REPS', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey))),
-          Expanded(flex: 3, child: Text('WEIGHT (KG)', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey))),
+          Expanded(
+            flex: 1,
+            child: Text(
+              'SET',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              'REPS',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              'WEIGHT (KG)',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+          ),
           Expanded(flex: 2, child: SizedBox()),
         ],
       ),
@@ -189,12 +427,19 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
     }
 
     int weightInt = tempWeight.floor();
-    int weightFractionIdx = [0, 25, 50, 75].indexOf(((tempWeight - weightInt) * 100).round()).clamp(0, 3);
+    int weightFractionIdx = [
+      0,
+      25,
+      50,
+      75,
+    ].indexOf(((tempWeight - weightInt) * 100).round()).clamp(0, 3);
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
         return Container(
           height: 350,
@@ -210,7 +455,10 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
                   ),
                   Text(
                     'Set ${index + 1}',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   TextButton(
                     onPressed: () {
@@ -221,7 +469,10 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
                       });
                       Navigator.pop(context);
                     },
-                    child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ],
               ),
@@ -233,13 +484,25 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
                       flex: 1,
                       child: Column(
                         children: [
-                          const Text('REPS', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                          const Text(
+                            'REPS',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           Expanded(
                             child: CupertinoPicker(
                               itemExtent: 40,
-                              scrollController: FixedExtentScrollController(initialItem: tempReps),
+                              scrollController: FixedExtentScrollController(
+                                initialItem: tempReps,
+                              ),
                               onSelectedItemChanged: (val) => tempReps = val,
-                              children: List.generate(101, (i) => Center(child: Text('$i'))),
+                              children: List.generate(
+                                101,
+                                (i) => Center(child: Text('$i')),
+                              ),
                             ),
                           ),
                         ],
@@ -251,31 +514,66 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
                       flex: 2,
                       child: Column(
                         children: [
-                          const Text('WEIGHT (KG)', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                          const Text(
+                            'WEIGHT (KG)',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           Expanded(
                             child: Row(
                               children: [
                                 Expanded(
                                   child: CupertinoPicker(
                                     itemExtent: 40,
-                                    scrollController: FixedExtentScrollController(initialItem: weightInt),
+                                    scrollController:
+                                        FixedExtentScrollController(
+                                          initialItem: weightInt,
+                                        ),
                                     onSelectedItemChanged: (val) {
                                       weightInt = val;
-                                      tempWeight = weightInt + ([0, 25, 50, 75][weightFractionIdx] / 100.0);
+                                      tempWeight =
+                                          weightInt +
+                                          ([0, 25, 50, 75][weightFractionIdx] /
+                                              100.0);
                                     },
-                                    children: List.generate(501, (i) => Center(child: Text('$i'))),
+                                    children: List.generate(
+                                      501,
+                                      (i) => Center(child: Text('$i')),
+                                    ),
                                   ),
                                 ),
-                                const Text('.', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                                const Text(
+                                  '.',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 Expanded(
                                   child: CupertinoPicker(
                                     itemExtent: 40,
-                                    scrollController: FixedExtentScrollController(initialItem: weightFractionIdx),
+                                    scrollController:
+                                        FixedExtentScrollController(
+                                          initialItem: weightFractionIdx,
+                                        ),
                                     onSelectedItemChanged: (idx) {
                                       weightFractionIdx = idx;
-                                      tempWeight = weightInt + ([0, 25, 50, 75][idx] / 100.0);
+                                      tempWeight =
+                                          weightInt +
+                                          ([0, 25, 50, 75][idx] / 100.0);
                                     },
-                                    children: [0, 25, 50, 75].map((f) => Center(child: Text(f.toString().padLeft(2, '0')))).toList(),
+                                    children: [0, 25, 50, 75]
+                                        .map(
+                                          (f) => Center(
+                                            child: Text(
+                                              f.toString().padLeft(2, '0'),
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
                                   ),
                                 ),
                               ],
@@ -350,7 +648,9 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
                         style: TextStyle(
                           fontSize: 16,
                           color: set.reps == 0 ? Colors.grey : null,
-                          fontWeight: set.reps == 0 ? FontWeight.normal : FontWeight.bold,
+                          fontWeight: set.reps == 0
+                              ? FontWeight.normal
+                              : FontWeight.bold,
                         ),
                       ),
                       if (repsPlaceholder.isNotEmpty)
@@ -358,7 +658,10 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
                           padding: const EdgeInsets.only(left: 4),
                           child: Text(
                             repsPlaceholder,
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
                           ),
                         ),
                     ],
@@ -374,7 +677,9 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
                         style: TextStyle(
                           fontSize: 16,
                           color: set.weight == 0 ? Colors.grey : null,
-                          fontWeight: set.weight == 0 ? FontWeight.normal : FontWeight.bold,
+                          fontWeight: set.weight == 0
+                              ? FontWeight.normal
+                              : FontWeight.bold,
                         ),
                       ),
                       if (weightPlaceholder.isNotEmpty)
@@ -382,7 +687,10 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
                           padding: const EdgeInsets.only(left: 4),
                           child: Text(
                             weightPlaceholder,
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
                           ),
                         ),
                     ],
@@ -392,7 +700,11 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
                   flex: 2,
                   child: Center(
                     child: IconButton(
-                      icon: const Icon(Icons.refresh, size: 20, color: Colors.grey),
+                      icon: const Icon(
+                        Icons.refresh,
+                        size: 20,
+                        color: Colors.grey,
+                      ),
                       onPressed: () {
                         setState(() {
                           set.reps = 0;
@@ -417,11 +729,15 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
       child: OutlinedButton(
         onPressed: () {
           setState(() {
-            final lastSet = _currentLog!.sets.isNotEmpty ? _currentLog!.sets.last : null;
-            _currentLog!.sets.add(ExerciseSet(
-              weight: lastSet?.weight ?? 0,
-              reps: lastSet?.reps ?? 0,
-            ));
+            final lastSet = _currentLog!.sets.isNotEmpty
+                ? _currentLog!.sets.last
+                : null;
+            _currentLog!.sets.add(
+              ExerciseSet(
+                weight: lastSet?.weight ?? 0,
+                reps: lastSet?.reps ?? 0,
+              ),
+            );
             _saveLog();
           });
         },
@@ -444,7 +760,10 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
   Widget _buildHistoryChart() {
     return Consumer<WorkoutProvider>(
       builder: (context, provider, child) {
-        final logs = provider.getLogsForExercise(widget.exercise.id, widget.workout.id);
+        final logs = provider.getLogsForExercise(
+          widget.exercise.id,
+          widget.workout.id,
+        );
         final points = logs.where((l) => l.sets.isNotEmpty).map((l) {
           int totalReps = l.sets.fold(0, (sum, s) => sum + s.reps);
           return ChartDataPoint(date: l.date, value: totalReps.toDouble());
