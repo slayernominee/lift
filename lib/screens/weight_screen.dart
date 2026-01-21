@@ -29,7 +29,9 @@ class WeightScreen extends StatelessWidget {
                 TextField(
                   controller: weightController,
                   autofocus: true,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: const InputDecoration(
                     hintText: 'Weight (kg)',
                     suffixText: 'kg',
@@ -64,11 +66,18 @@ class WeightScreen extends StatelessWidget {
                   },
                   child: Row(
                     children: [
-                      const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                      const Icon(
+                        Icons.calendar_today,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         DateFormat('MMM d, yyyy HH:mm').format(selectedDate),
-                        style: const TextStyle(color: Colors.grey, fontSize: 13),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
@@ -104,9 +113,7 @@ class WeightScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Weight Tracker'),
-      ),
+      appBar: AppBar(title: const Text('Weight Tracker')),
       body: Consumer<WorkoutProvider>(
         builder: (context, provider, child) {
           final entries = provider.weightEntries;
@@ -125,11 +132,75 @@ class WeightScreen extends StatelessWidget {
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.all(32.0),
-                    child: Text('No weight entries yet', style: TextStyle(color: Colors.grey)),
+                    child: Text(
+                      'No weight entries yet',
+                      style: TextStyle(color: Colors.grey),
+                    ),
                   ),
                 )
               else
-                ...entries.map((entry) => _buildWeightTile(context, entry, provider)),
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: entries.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final entry = entries[index];
+                    return Dismissible(
+                      key: Key(entry.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      confirmDismiss: (direction) async {
+                        return await showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Weight Entry'),
+                            content: Text(
+                              'Are you sure you want to delete the entry from ${DateFormat('MMM d, yyyy').format(entry.date)}?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text(
+                                  'Delete',
+                                  style: TextStyle(color: Colors.redAccent),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      onDismissed: (direction) {
+                        provider.deleteWeightEntry(entry.id);
+                      },
+                      child: Card(
+                        margin: EdgeInsets.zero,
+                        child: ListTile(
+                          title: Text(
+                            '${entry.weight} kg',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            DateFormat('MMM d, yyyy HH:mm').format(entry.date),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
             ],
           );
         },
@@ -143,30 +214,15 @@ class WeightScreen extends StatelessWidget {
   }
 
   Widget _buildWeightChart(List<WeightEntry> entries) {
-    final points = entries.map((e) => ChartDataPoint(date: e.date, value: e.weight)).toList();
+    final points = entries
+        .map((e) => ChartDataPoint(date: e.date, value: e.weight))
+        .toList();
 
     return TimelineChart(
       points: points,
       label: 'Weight Progress',
       subLabel: 'Body weight over time (kg)',
       color: Colors.tealAccent,
-    );
-  }
-
-  Widget _buildWeightTile(BuildContext context, WeightEntry entry, WorkoutProvider provider) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        title: Text(
-          '${entry.weight} kg',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(DateFormat('MMM d, yyyy HH:mm').format(entry.date)),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-          onPressed: () => provider.deleteWeightEntry(entry.id),
-        ),
-      ),
     );
   }
 }

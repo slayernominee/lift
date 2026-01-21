@@ -3,8 +3,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:lift/providers/workout_provider.dart';
 
-class AboutScreen extends StatelessWidget {
-  const AboutScreen({super.key});
+class SettingsScreen extends StatelessWidget {
+  const SettingsScreen({super.key});
 
   Future<void> _exportAllWorkouts(BuildContext context) async {
     final provider = context.read<WorkoutProvider>();
@@ -60,12 +60,59 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('About Lift')),
+      appBar: AppBar(title: const Text('Settings')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
             const SizedBox(height: 20),
+
+            // Data Management Section
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Data Management',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Export Workouts
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.file_download, color: Colors.blue),
+                title: const Text('Export All Workouts'),
+                subtitle: const Text('Backup your workout configurations'),
+                trailing: const Icon(Icons.chevron_right, size: 20),
+                onTap: () => _exportAllWorkouts(context),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Import Workouts
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.file_upload, color: Colors.green),
+                title: const Text('Import Workouts'),
+                subtitle: const Text('Restore workout configurations'),
+                trailing: const Icon(Icons.chevron_right, size: 20),
+                onTap: () => _importAllWorkouts(context),
+              ),
+            ),
+
+            const SizedBox(height: 48),
+
+            // About Section
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'About',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 16),
+
             // App Logo
             Center(
               child: Container(
@@ -113,7 +160,7 @@ class AboutScreen extends StatelessWidget {
                 style: TextStyle(color: Colors.grey),
               ),
             ),
-            const SizedBox(height: 48),
+            const SizedBox(height: 32),
 
             // App Description
             const Text(
@@ -121,7 +168,7 @@ class AboutScreen extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, height: 1.5),
             ),
-            const SizedBox(height: 48),
+            const SizedBox(height: 32),
 
             // Source Code Card
             Card(
@@ -161,32 +208,6 @@ class AboutScreen extends StatelessWidget {
                   applicationName: 'Lift',
                   applicationVersion: '1.2.0',
                 ),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Export Workouts
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.file_download, color: Colors.blue),
-                title: const Text('Export All Workouts'),
-                subtitle: const Text('Backup your workout configurations'),
-                trailing: const Icon(Icons.chevron_right, size: 20),
-                onTap: () => _exportAllWorkouts(context),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Import Workouts
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.file_upload, color: Colors.green),
-                title: const Text('Import Workouts'),
-                subtitle: const Text('Restore workout configurations'),
-                trailing: const Icon(Icons.chevron_right, size: 20),
-                onTap: () => _importAllWorkouts(context),
               ),
             ),
 

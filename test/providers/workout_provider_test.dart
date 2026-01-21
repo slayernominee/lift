@@ -26,6 +26,11 @@ void main() {
       workoutBox.clear();
     });
 
+    tearDown(() {
+      exerciseBox.clear();
+      workoutBox.clear();
+    });
+
     tearDownAll(() async {
       await Hive.close();
     });

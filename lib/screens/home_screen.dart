@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lift/screens/workouts_screen.dart';
 import 'package:lift/screens/exercises_screen.dart';
 import 'package:lift/screens/weight_screen.dart';
-import 'package:lift/screens/about_screen.dart';
+import 'package:lift/screens/settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,7 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const WorkoutsScreen(),
     const ExercisesScreen(),
     const WeightScreen(),
-    const AboutScreen(),
+    const SettingsScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -30,10 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: _screens),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,
@@ -56,9 +53,9 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Weight',
           ),
           NavigationDestination(
-            icon: Icon(Icons.info_outline),
-            selectedIcon: Icon(Icons.info),
-            label: 'About',
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),
