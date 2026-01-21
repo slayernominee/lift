@@ -5,6 +5,7 @@ import 'package:lift/models/workout.dart';
 import 'package:lift/models/exercise.dart';
 import 'package:lift/providers/workout_provider.dart';
 import 'package:lift/screens/exercise_tracking_screen.dart';
+import 'package:lift/screens/exercises_screen.dart';
 
 class WorkoutDetailScreen extends StatefulWidget {
   final Workout workout;
@@ -18,79 +19,22 @@ class WorkoutDetailScreen extends StatefulWidget {
 class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
   bool _isReorderMode = false;
 
-  void _showAddExerciseBottomSheet() {
-    final provider = context.read<WorkoutProvider>();
-    final availableExercises = provider.exercises;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.7,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          expand: false,
-          builder: (context, scrollController) {
-            return Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
-                    'Add Exercise',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    controller: scrollController,
-                    itemCount: availableExercises.length,
-                    itemBuilder: (context, index) {
-                      final exercise = availableExercises[index];
-                      return ListTile(
-                        title: Text(exercise.name),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (exercise.muscleGroup != null)
-                              Text(exercise.muscleGroup!),
-                            if (exercise.description != null &&
-                                exercise.description!.isNotEmpty)
-                              Text(
-                                exercise.description!,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                  fontSize: 12,
-                                ),
-                              ),
-                          ],
-                        ),
-                        onTap: () {
-                          setState(() {
-                            widget.workout.exercises.add(
-                              WorkoutExercise.create(exerciseId: exercise.id),
-                            );
-                            provider.updateWorkout(widget.workout);
-                          });
-                          Navigator.pop(context);
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            );
+  void _showAddExerciseScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ExercisesScreen(
+          onSelect: (exercise) {
+            setState(() {
+              widget.workout.exercises.add(
+                WorkoutExercise.create(exerciseId: exercise.id),
+              );
+              context.read<WorkoutProvider>().updateWorkout(widget.workout);
+            });
+            Navigator.pop(context);
           },
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -260,7 +204,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: _showAddExerciseBottomSheet,
+            onPressed: _showAddExerciseScreen,
           ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),

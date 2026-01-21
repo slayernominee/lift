@@ -4,7 +4,9 @@ import 'package:lift/providers/workout_provider.dart';
 import 'package:lift/models/exercise.dart';
 
 class ExercisesScreen extends StatefulWidget {
-  const ExercisesScreen({super.key});
+  final void Function(Exercise)? onSelect;
+
+  const ExercisesScreen({super.key, this.onSelect});
 
   @override
   State<ExercisesScreen> createState() => _ExercisesScreenState();
@@ -140,7 +142,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Exercise Pool'),
+        title: Text(
+          widget.onSelect != null ? 'Select Exercise' : 'Exercise Pool',
+        ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: Padding(
@@ -183,56 +187,111 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
             return const Center(child: Text('No exercises match your search.'));
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: exercises.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
+          // Group exercises by muscle group
+          final groupedExercises = <String, List<Exercise>>{};
+          for (var exercise in exercises) {
+            final group = exercise.muscleGroup ?? 'Other';
+            groupedExercises.putIfAbsent(group, () => []).add(exercise);
+          }
+
+          final sortedKeys = groupedExercises.keys.toList()..sort();
+
+          return ListView.builder(
+            padding: const EdgeInsets.only(bottom: 80),
+            itemCount: sortedKeys.length,
             itemBuilder: (context, index) {
-              final exercise = exercises[index];
-              return Dismissible(
-                key: Key(exercise.id),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.redAccent,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.delete, color: Colors.white),
-                ),
-                confirmDismiss: (direction) async {
-                  return await showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Delete Exercise'),
-                      content: Text(
-                        'Are you sure you want to delete "${exercise.name}"?',
+              final group = sortedKeys[index];
+              final groupExercises = groupedExercises[group]!;
+              groupExercises.sort((a, b) => a.name.compareTo(b.name));
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                    child: Text(
+                      group.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text(
-                            'Delete',
-                            style: TextStyle(color: Colors.redAccent),
-                          ),
-                        ),
-                      ],
                     ),
-                  );
-                },
-                onDismissed: (direction) {
-                  exercise.delete();
-                  setState(() {});
-                },
-                child: _ExerciseCard(
-                  exercise: exercise,
-                  onTap: () => _showEditExerciseDialog(context, exercise),
-                ),
+                  ),
+                  ...groupExercises.map((exercise) {
+                    final card = _ExerciseCard(
+                      exercise: exercise,
+                      onTap: () {
+                        if (widget.onSelect != null) {
+                          widget.onSelect!(exercise);
+                        } else {
+                          _showEditExerciseDialog(context, exercise);
+                        }
+                      },
+                    );
+
+                    if (widget.onSelect != null) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        child: card,
+                      );
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      child: Dismissible(
+                        key: Key(exercise.id),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.delete, color: Colors.white),
+                        ),
+                        confirmDismiss: (direction) async {
+                          return await showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Delete Exercise'),
+                              content: Text(
+                                'Are you sure you want to delete "${exercise.name}"?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text(
+                                    'Delete',
+                                    style: TextStyle(color: Colors.redAccent),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        onDismissed: (direction) {
+                          exercise.delete();
+                          setState(() {});
+                        },
+                        child: card,
+                      ),
+                    );
+                  }),
+                ],
               );
             },
           );
