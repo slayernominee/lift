@@ -15,6 +15,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
 
   void _showAddExerciseDialog(BuildContext context) {
     final nameController = TextEditingController();
+    final descriptionController = TextEditingController();
     final muscleController = TextEditingController();
 
     showDialog(
@@ -29,6 +30,13 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               autofocus: true,
               decoration: const InputDecoration(
                 hintText: 'Exercise Name (e.g. Bench Press)',
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: descriptionController,
+              decoration: const InputDecoration(
+                hintText: 'Description (optional)',
               ),
             ),
             const SizedBox(height: 8),
@@ -50,6 +58,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               if (nameController.text.isNotEmpty) {
                 final exercise = Exercise.create(
                   name: nameController.text,
+                  description: descriptionController.text.isEmpty
+                      ? null
+                      : descriptionController.text,
                   muscleGroup: muscleController.text.isEmpty
                       ? null
                       : muscleController.text,
@@ -67,6 +78,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
 
   void _showEditExerciseDialog(BuildContext context, Exercise exercise) {
     final nameController = TextEditingController(text: exercise.name);
+    final descriptionController = TextEditingController(
+      text: exercise.description ?? '',
+    );
     final muscleController = TextEditingController(
       text: exercise.muscleGroup ?? '',
     );
@@ -85,6 +99,11 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
             ),
             const SizedBox(height: 8),
             TextField(
+              controller: descriptionController,
+              decoration: const InputDecoration(hintText: 'Description'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
               controller: muscleController,
               decoration: const InputDecoration(hintText: 'Muscle Group'),
             ),
@@ -99,6 +118,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
             onPressed: () {
               if (nameController.text.isNotEmpty) {
                 exercise.name = nameController.text;
+                exercise.description = descriptionController.text.isEmpty
+                    ? null
+                    : descriptionController.text;
                 exercise.muscleGroup = muscleController.text.isEmpty
                     ? null
                     : muscleController.text;
@@ -248,10 +270,33 @@ class _ExerciseCard extends StatelessWidget {
           exercise.name,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        subtitle: exercise.muscleGroup != null
-            ? Text(
-                exercise.muscleGroup!,
-                style: TextStyle(color: Theme.of(context).colorScheme.primary),
+        subtitle:
+            (exercise.muscleGroup != null ||
+                (exercise.description != null &&
+                    exercise.description!.isNotEmpty))
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (exercise.muscleGroup != null)
+                    Text(
+                      exercise.muscleGroup!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  if (exercise.description != null &&
+                      exercise.description!.isNotEmpty)
+                    Text(
+                      exercise.description!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                      ),
+                    ),
+                ],
               )
             : null,
         trailing: Icon(

@@ -52,7 +52,27 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                       final exercise = availableExercises[index];
                       return ListTile(
                         title: Text(exercise.name),
-                        subtitle: Text(exercise.muscleGroup ?? ''),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (exercise.muscleGroup != null)
+                              Text(exercise.muscleGroup!),
+                            if (exercise.description != null &&
+                                exercise.description!.isNotEmpty)
+                              Text(
+                                exercise.description!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                  fontSize: 12,
+                                ),
+                              ),
+                          ],
+                        ),
                         onTap: () {
                           setState(() {
                             widget.workout.exercises.add(
@@ -401,36 +421,57 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
           ),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                GestureDetector(
-                  onTap: () => _editSets(workoutExercise),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      '${workoutExercise.targetSets} sets',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.bold,
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => _editSets(workoutExercise),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '${workoutExercise.targetSets} sets',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    if (exercise?.muscleGroup != null) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        exercise!.muscleGroup!,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                if (exercise?.muscleGroup != null) ...[
-                  const SizedBox(width: 8),
+                if (exercise?.description != null &&
+                    exercise!.description!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
                   Text(
-                    exercise!.muscleGroup!,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    exercise.description!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ],

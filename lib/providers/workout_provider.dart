@@ -425,17 +425,62 @@ class WorkoutProvider with ChangeNotifier {
   void _initDefaults() {
     if (_exerciseBox.isEmpty) {
       final defaultExercises = [
-        Exercise.create(name: 'Bench Press', muscleGroup: 'Chest'),
-        Exercise.create(name: 'Squat', muscleGroup: 'Legs'),
-        Exercise.create(name: 'Deadlift', muscleGroup: 'Back'),
-        Exercise.create(name: 'Overhead Press', muscleGroup: 'Shoulders'),
-        Exercise.create(name: 'Barbell Row', muscleGroup: 'Back'),
-        Exercise.create(name: 'Pull Ups', muscleGroup: 'Back'),
-        Exercise.create(name: 'Bicep Curl', muscleGroup: 'Arms'),
-        Exercise.create(name: 'Tricep Extension', muscleGroup: 'Arms'),
-        Exercise.create(name: 'Lunges', muscleGroup: 'Legs'),
-        Exercise.create(name: 'Lateral Raises', muscleGroup: 'Shoulders'),
-        Exercise.create(name: 'Plank', muscleGroup: 'Core'),
+        Exercise.create(
+          name: 'Bench Press',
+          muscleGroup: 'Chest',
+          description: 'Compound exercise for chest, shoulders, and triceps.',
+        ),
+        Exercise.create(
+          name: 'Squat',
+          muscleGroup: 'Legs',
+          description: 'Compound exercise for quads, hamstrings, and glutes.',
+        ),
+        Exercise.create(
+          name: 'Deadlift',
+          muscleGroup: 'Back',
+          description:
+              'Full body compound movement focusing on posterior chain.',
+        ),
+        Exercise.create(
+          name: 'Overhead Press',
+          muscleGroup: 'Shoulders',
+          description: 'Vertical push exercise for shoulders and triceps.',
+        ),
+        Exercise.create(
+          name: 'Barbell Row',
+          muscleGroup: 'Back',
+          description: 'Horizontal pull exercise for back thickness.',
+        ),
+        Exercise.create(
+          name: 'Pull Ups',
+          muscleGroup: 'Back',
+          description: 'Vertical pull exercise for back width and biceps.',
+        ),
+        Exercise.create(
+          name: 'Bicep Curl',
+          muscleGroup: 'Arms',
+          description: 'Isolation exercise for biceps.',
+        ),
+        Exercise.create(
+          name: 'Tricep Extension',
+          muscleGroup: 'Arms',
+          description: 'Isolation exercise for triceps.',
+        ),
+        Exercise.create(
+          name: 'Lunges',
+          muscleGroup: 'Legs',
+          description: 'Unilateral leg exercise for quads and glutes.',
+        ),
+        Exercise.create(
+          name: 'Lateral Raises',
+          muscleGroup: 'Shoulders',
+          description: 'Isolation exercise for side delts.',
+        ),
+        Exercise.create(
+          name: 'Plank',
+          muscleGroup: 'Core',
+          description: 'Isometric core stability exercise.',
+        ),
       ];
       for (var e in defaultExercises) {
         _exerciseBox.put(e.id, e);
