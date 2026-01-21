@@ -1,18 +1,9 @@
 import 'package:equatable/equatable.dart';
-import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
-part 'log.g.dart';
-
-@HiveType(typeId: 3)
-class ExerciseSet extends HiveObject with EquatableMixin {
-  @HiveField(0)
+class ExerciseSet with EquatableMixin {
   double weight;
-
-  @HiveField(1)
   int reps;
-
-  @HiveField(2)
   bool completed;
 
   ExerciseSet({
@@ -25,21 +16,11 @@ class ExerciseSet extends HiveObject with EquatableMixin {
   List<Object?> get props => [weight, reps, completed];
 }
 
-@HiveType(typeId: 4)
-class ExerciseLog extends HiveObject with EquatableMixin {
-  @HiveField(0)
+class ExerciseLog with EquatableMixin {
   final String id;
-
-  @HiveField(1)
   final String exerciseId;
-
-  @HiveField(2)
   final String workoutId;
-
-  @HiveField(3)
   final DateTime date;
-
-  @HiveField(4)
   List<ExerciseSet> sets;
 
   ExerciseLog({

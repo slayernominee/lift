@@ -18,21 +18,16 @@ void main() async {
   Hive.registerAdapter(ExerciseAdapter());
   Hive.registerAdapter(WorkoutAdapter());
   Hive.registerAdapter(WorkoutExerciseAdapter());
-  Hive.registerAdapter(ExerciseSetAdapter());
-  Hive.registerAdapter(ExerciseLogAdapter());
   Hive.registerAdapter(WeightEntryAdapter());
 
   // Open Hive Boxes
   await Hive.openBox<Exercise>('exercises');
   await Hive.openBox<Workout>('workouts');
-  await Hive.openBox<ExerciseLog>('logs');
   await Hive.openBox<WeightEntry>('weights');
 
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => WorkoutProvider()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => WorkoutProvider())],
       child: const LiftApp(),
     ),
   );

@@ -19,16 +19,16 @@ void main() {
       await Hive.openBox<Workout>('workouts');
     });
 
-    setUp(() {
+    setUp(() async {
       exerciseBox = Hive.box<Exercise>('exercises');
       workoutBox = Hive.box<Workout>('workouts');
-      exerciseBox.clear();
-      workoutBox.clear();
+      await exerciseBox.clear();
+      await workoutBox.clear();
     });
 
-    tearDown(() {
-      exerciseBox.clear();
-      workoutBox.clear();
+    tearDown(() async {
+      await exerciseBox.clear();
+      await workoutBox.clear();
     });
 
     tearDownAll(() async {
@@ -429,54 +429,57 @@ void main() {
         expect(newExercise?.name, 'Incline Dumbbell Press');
       });
 
-      test('should handle single workout export format with exercises', () {
-        // Clear exercises to start fresh
-        exerciseBox.clear();
+      test(
+        'should handle single workout export format with exercises',
+        () async {
+          // Clear exercises to start fresh
+          await exerciseBox.clear();
 
-        final singleWorkoutWithExercises = {
-          'version': '1.1.0',
-          'exercises': [
-            {
-              'id': 'ex-1',
-              'name': 'Squat',
-              'description': null,
-              'muscleGroup': 'Legs',
-            },
-          ],
-          'workout': {
-            'id': 'workout-1',
-            'name': 'Leg Day',
+          final singleWorkoutWithExercises = {
+            'version': '1.1.0',
             'exercises': [
-              {'id': 'we-1', 'exerciseId': 'ex-1', 'targetSets': 5},
+              {
+                'id': 'ex-1',
+                'name': 'Squat',
+                'description': null,
+                'muscleGroup': 'Legs',
+              },
             ],
-          },
-        };
+            'workout': {
+              'id': 'workout-1',
+              'name': 'Leg Day',
+              'exercises': [
+                {'id': 'we-1', 'exerciseId': 'ex-1', 'targetSets': 5},
+              ],
+            },
+          };
 
-        // Simulate import logic for single workout format
-        final dynamic jsonData = singleWorkoutWithExercises;
-        final exportData = jsonData as Map<String, dynamic>;
-        final exercisesData = exportData['exercises'] as List<dynamic>;
-        final workoutData = exportData['workout'] as Map<String, dynamic>;
+          // Simulate import logic for single workout format
+          final dynamic jsonData = singleWorkoutWithExercises;
+          final exportData = jsonData as Map<String, dynamic>;
+          final exercisesData = exportData['exercises'] as List<dynamic>;
+          final workoutData = exportData['workout'] as Map<String, dynamic>;
 
-        // Auto-create exercises
-        for (final exJson in exercisesData) {
-          final exerciseData = exJson as Map<String, dynamic>;
-          final exerciseId = exerciseData['id'] as String;
+          // Auto-create exercises
+          for (final exJson in exercisesData) {
+            final exerciseData = exJson as Map<String, dynamic>;
+            final exerciseId = exerciseData['id'] as String;
 
-          if (!exerciseBox.containsKey(exerciseId)) {
-            final exercise = Exercise.fromJson(exerciseData);
-            exerciseBox.put(exercise.id, exercise);
+            if (!exerciseBox.containsKey(exerciseId)) {
+              final exercise = Exercise.fromJson(exerciseData);
+              exerciseBox.put(exercise.id, exercise);
+            }
           }
-        }
 
-        // Get workout list (single workout)
-        final List<dynamic> jsonList = [workoutData];
+          // Get workout list (single workout)
+          final List<dynamic> jsonList = [workoutData];
 
-        expect(jsonList.length, 1);
-        expect(jsonList.first['name'], 'Leg Day');
-        expect(exerciseBox.length, 1);
-        expect(exerciseBox.get('ex-1')?.name, 'Squat');
-      });
+          expect(jsonList.length, 1);
+          expect(jsonList.first['name'], 'Leg Day');
+          expect(exerciseBox.length, 1);
+          expect(exerciseBox.get('ex-1')?.name, 'Squat');
+        },
+      );
 
       test('should detect duplicate workout names', () {
         final existingWorkout = Workout.create(name: 'Existing Workout');

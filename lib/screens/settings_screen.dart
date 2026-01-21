@@ -50,6 +50,27 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _exportLogs(BuildContext context) async {
+    final provider = context.read<WorkoutProvider>();
+    final result = await provider.exportLogs();
+
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Export Result'),
+          content: Text(result),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   Future<void> _launchURL(String urlString) async {
     final Uri url = Uri.parse(urlString);
     if (!await launchUrl(url)) {
@@ -98,6 +119,19 @@ class SettingsScreen extends StatelessWidget {
                 subtitle: const Text('Restore workout configurations'),
                 trailing: const Icon(Icons.chevron_right, size: 20),
                 onTap: () => _importAllWorkouts(context),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Export Logs
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.table_chart, color: Colors.purple),
+                title: const Text('Export Exercise Logs'),
+                subtitle: const Text('Export logs to CSV'),
+                trailing: const Icon(Icons.chevron_right, size: 20),
+                onTap: () => _exportLogs(context),
               ),
             ),
 

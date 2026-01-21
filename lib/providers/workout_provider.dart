@@ -10,15 +10,53 @@ import 'package:lift/models/log.dart';
 import 'package:lift/models/weight.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart';
+import 'package:lift/database/database_helper.dart';
 
 class WorkoutProvider with ChangeNotifier {
   final Box<Exercise> _exerciseBox = Hive.box<Exercise>('exercises');
   final Box<Workout> _workoutBox = Hive.box<Workout>('workouts');
-  final Box<ExerciseLog> _logBox = Hive.box<ExerciseLog>('logs');
   final Box<WeightEntry> _weightBox = Hive.box<WeightEntry>('weights');
+
+  List<ExerciseLog> _logs = [];
 
   WorkoutProvider() {
     _initDefaults();
+    _initDatabase();
+  }
+
+  Future<void> _initDatabase() async {
+    final db = await DatabaseHelper.instance.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'set_logs',
+      orderBy: 'timestamp ASC, set_index ASC',
+    );
+
+    final Map<String, ExerciseLog> logMap = {};
+
+    for (final map in maps) {
+      final logId = map['log_id'] as String;
+      if (!logMap.containsKey(logId)) {
+        logMap[logId] = ExerciseLog(
+          id: logId,
+          exerciseId: map['exercise_uuid'] as String,
+          workoutId: map['workout_uuid'] as String,
+          date: DateTime.fromMillisecondsSinceEpoch(map['timestamp'] as int),
+          sets: [],
+        );
+      }
+
+      logMap[logId]!.sets.add(
+        ExerciseSet(
+          weight: map['weight'] as double,
+          reps: map['reps'] as int,
+          completed: (map['completed'] as int) == 1,
+        ),
+      );
+    }
+
+    _logs = logMap.values.toList();
+
+    notifyListeners();
   }
 
   // --- Getters ---
@@ -256,9 +294,49 @@ class WorkoutProvider with ChangeNotifier {
     }
   }
 
+  Future<String> exportLogs() async {
+    try {
+      if (_logs.isEmpty) {
+        return 'No logs to export.';
+      }
+
+      final StringBuffer csvBuffer = StringBuffer();
+      csvBuffer.writeln(
+        'workout_uuid,exercise_uuid,timestamp,set_index,reps,weight,completed',
+      );
+
+      for (final log in _logs) {
+        for (int i = 0; i < log.sets.length; i++) {
+          final set = log.sets[i];
+          csvBuffer.writeln(
+            '${log.workoutId},${log.exerciseId},${log.date.millisecondsSinceEpoch},$i,${set.reps},${set.weight},${set.completed ? 1 : 0}',
+          );
+        }
+      }
+
+      final bytes = utf8.encode(csvBuffer.toString());
+      final timestamp = DateTime.now().toIso8601String().split('T')[0];
+      final outputPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'Save Logs Export',
+        fileName: 'logs_export_$timestamp.csv',
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+        bytes: bytes,
+      );
+
+      if (outputPath == null) {
+        return 'Export cancelled.';
+      }
+
+      return 'Exported logs to:\n$outputPath';
+    } catch (e) {
+      return 'Export failed: ${e.toString()}';
+    }
+  }
+
   // --- Log Methods ---
   List<ExerciseLog> getLogsForExercise(String exerciseId, String workoutId) {
-    return _logBox.values
+    return _logs
         .where(
           (log) => log.exerciseId == exerciseId && log.workoutId == workoutId,
         )
@@ -269,7 +347,7 @@ class WorkoutProvider with ChangeNotifier {
   ExerciseLog? getLog(String exerciseId, String workoutId, DateTime date) {
     final startOfDay = DateTime(date.year, date.month, date.day);
     try {
-      return _logBox.values.firstWhere(
+      return _logs.firstWhere(
         (log) =>
             log.exerciseId == exerciseId &&
             log.workoutId == workoutId &&
@@ -284,8 +362,35 @@ class WorkoutProvider with ChangeNotifier {
     }
   }
 
-  void saveLog(ExerciseLog log) {
-    _logBox.put(log.id, log);
+  Future<void> saveLog(ExerciseLog log) async {
+    // Save to Memory
+    final index = _logs.indexWhere((l) => l.id == log.id);
+    if (index >= 0) {
+      _logs[index] = log;
+    } else {
+      _logs.add(log);
+    }
+
+    // Save to SQLite
+    final db = await DatabaseHelper.instance.database;
+    await db.delete('set_logs', where: 'log_id = ?', whereArgs: [log.id]);
+
+    final batch = db.batch();
+    for (int i = 0; i < log.sets.length; i++) {
+      final set = log.sets[i];
+      batch.insert('set_logs', {
+        'log_id': log.id,
+        'workout_uuid': log.workoutId,
+        'exercise_uuid': log.exerciseId,
+        'timestamp': log.date.millisecondsSinceEpoch,
+        'set_index': i,
+        'reps': set.reps,
+        'weight': set.weight,
+        'completed': set.completed ? 1 : 0,
+      });
+    }
+    await batch.commit(noResult: true);
+
     notifyListeners();
   }
 
