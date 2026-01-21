@@ -429,57 +429,68 @@ class WorkoutProvider with ChangeNotifier {
           name: 'Bench Press',
           muscleGroup: 'Chest',
           description: 'Compound exercise for chest, shoulders, and triceps.',
+          equipment: 'Barbell',
         ),
         Exercise.create(
           name: 'Squat',
           muscleGroup: 'Legs',
           description: 'Compound exercise for quads, hamstrings, and glutes.',
+          equipment: 'Barbell',
         ),
         Exercise.create(
           name: 'Deadlift',
           muscleGroup: 'Back',
           description:
               'Full body compound movement focusing on posterior chain.',
+          equipment: 'Barbell',
         ),
         Exercise.create(
           name: 'Overhead Press',
           muscleGroup: 'Shoulders',
           description: 'Vertical push exercise for shoulders and triceps.',
+          equipment: 'Barbell',
         ),
         Exercise.create(
           name: 'Barbell Row',
           muscleGroup: 'Back',
           description: 'Horizontal pull exercise for back thickness.',
+          equipment: 'Barbell',
         ),
         Exercise.create(
           name: 'Pull Ups',
           muscleGroup: 'Back',
           description: 'Vertical pull exercise for back width and biceps.',
+          equipment: 'Pull-up bar',
         ),
         Exercise.create(
           name: 'Bicep Curl',
           muscleGroup: 'Arms',
           description: 'Isolation exercise for biceps.',
+          equipment: 'Dumbbells',
         ),
         Exercise.create(
           name: 'Tricep Extension',
           muscleGroup: 'Arms',
           description: 'Isolation exercise for triceps.',
+          equipment: 'Dumbbells',
         ),
         Exercise.create(
           name: 'Lunges',
           muscleGroup: 'Legs',
           description: 'Unilateral leg exercise for quads and glutes.',
+          equipment: 'Bodyweight',
         ),
         Exercise.create(
           name: 'Lateral Raises',
           muscleGroup: 'Shoulders',
           description: 'Isolation exercise for side delts.',
+          equipment: 'Dumbbells',
         ),
         Exercise.create(
           name: 'Plank',
           muscleGroup: 'Core',
           description: 'Isometric core stability exercise.',
+          equipment: 'Bodyweight',
         ),
       ];
       for (var e in defaultExercises) {

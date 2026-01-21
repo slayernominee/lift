@@ -19,6 +19,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
     final muscleController = TextEditingController();
+    final equipmentController = TextEditingController();
 
     showDialog(
       context: context,
@@ -48,6 +49,13 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                 hintText: 'Muscle Group (e.g. Chest)',
               ),
             ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: equipmentController,
+              decoration: const InputDecoration(
+                hintText: 'Equipment (e.g. Dumbbells, Barbell)',
+              ),
+            ),
           ],
         ),
         actions: [
@@ -66,6 +74,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                   muscleGroup: muscleController.text.isEmpty
                       ? null
                       : muscleController.text,
+                  equipment: equipmentController.text.isEmpty
+                      ? null
+                      : equipmentController.text,
                 );
                 context.read<WorkoutProvider>().addExercise(exercise);
                 Navigator.pop(context);
@@ -85,6 +96,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     );
     final muscleController = TextEditingController(
       text: exercise.muscleGroup ?? '',
+    );
+    final equipmentController = TextEditingController(
+      text: exercise.equipment ?? '',
     );
 
     showDialog(
@@ -109,6 +123,11 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               controller: muscleController,
               decoration: const InputDecoration(hintText: 'Muscle Group'),
             ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: equipmentController,
+              decoration: const InputDecoration(hintText: 'Equipment'),
+            ),
           ],
         ),
         actions: [
@@ -126,6 +145,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                 exercise.muscleGroup = muscleController.text.isEmpty
                     ? null
                     : muscleController.text;
+                exercise.equipment = equipmentController.text.isEmpty
+                    ? null
+                    : equipmentController.text;
                 exercise.save();
                 setState(() {});
                 Navigator.pop(context);
@@ -176,7 +198,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
         builder: (context, provider, child) {
           final exercises = provider.exercises.where((e) {
             return e.name.toLowerCase().contains(_searchQuery) ||
-                (e.muscleGroup?.toLowerCase().contains(_searchQuery) ?? false);
+                (e.muscleGroup?.toLowerCase().contains(_searchQuery) ??
+                    false) ||
+                (e.equipment?.toLowerCase().contains(_searchQuery) ?? false);
           }).toList();
 
           if (exercises.isEmpty && _searchQuery.isEmpty) {
@@ -331,6 +355,7 @@ class _ExerciseCard extends StatelessWidget {
         ),
         subtitle:
             (exercise.muscleGroup != null ||
+                exercise.equipment != null ||
                 (exercise.description != null &&
                     exercise.description!.isNotEmpty))
             ? Column(
@@ -342,6 +367,18 @@ class _ExerciseCard extends StatelessWidget {
                       exercise.muscleGroup!,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  if (exercise.equipment != null)
+                    Text(
+                      exercise.equipment!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.7),
+                        fontSize: 12,
                       ),
                     ),
                   if (exercise.description != null &&
