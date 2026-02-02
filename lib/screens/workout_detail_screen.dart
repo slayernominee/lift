@@ -184,7 +184,12 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(widget.workout.name),
+              Flexible(
+                child: Text(
+                  widget.workout.name,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
               const SizedBox(width: 8),
               const Icon(Icons.edit, size: 16, color: Colors.grey),
             ],
@@ -395,11 +400,14 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                     ),
                     if (exercise?.targetMuscles.isNotEmpty ?? false) ...[
                       const SizedBox(width: 8),
-                      Text(
-                        exercise!.targetMuscles.join(', '),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
+                      Expanded(
+                        child: Text(
+                          exercise!.targetMuscles.join(', '),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
