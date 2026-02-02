@@ -28,11 +28,24 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
   DateTime _selectedDate = DateTime.now();
   ExerciseLog? _currentLog;
   ExerciseLog? _lastLog;
+  bool _showDetails = false;
+  late TextEditingController _notesController;
 
   @override
   void initState() {
     super.initState();
+    _notesController = TextEditingController(text: widget.exercise.notes);
     _loadLog();
+  }
+
+  @override
+  void dispose() {
+    if (widget.exercise.notes != _notesController.text) {
+      widget.exercise.notes = _notesController.text;
+      widget.exercise.save();
+    }
+    _notesController.dispose();
+    super.dispose();
   }
 
   void _loadLog() {
@@ -83,15 +96,43 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.exercise.name)),
+      appBar: AppBar(
+        title: GestureDetector(
+          onTap: () => setState(() => _showDetails = !_showDetails),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.exercise.gifAsset != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: Image.asset(
+                      widget.exercise.gifAsset!,
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              Text(widget.exercise.name),
+              const SizedBox(width: 4),
+              Icon(
+                _showDetails ? Icons.expand_less : Icons.expand_more,
+                size: 16,
+              ),
+            ],
+          ),
+        ),
+      ),
       body: Column(
         children: [
           _buildDateSwitcher(),
-          _buildExerciseDetails(),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                _buildExerciseDetails(),
                 _buildSetsHeader(),
                 const SizedBox(height: 8),
                 if (_currentLog != null) ...[
@@ -175,11 +216,31 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
   }
 
   Widget _buildExerciseDetails() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Notes Section
+        Container(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: TextField(
+            controller: _notesController,
+            maxLines: null,
+            decoration: InputDecoration(
+              labelText: 'Notes',
+              hintText: 'Add notes for this exercise...',
+              prefixIcon: const Icon(Icons.note_alt_outlined),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onChanged: (value) {
+              widget.exercise.notes = value;
+              widget.exercise.save();
+            },
+          ),
+        ),
+
+        if (_showDetails) ...[
           // GIF if available
           if (widget.exercise.gifAsset != null)
             Center(
@@ -304,10 +365,10 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
               ),
             ),
           ],
-
-          const Divider(height: 24),
         ],
-      ),
+
+        const Divider(height: 24),
+      ],
     );
   }
 

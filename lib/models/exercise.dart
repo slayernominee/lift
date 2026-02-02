@@ -33,6 +33,9 @@ class Exercise extends HiveObject with EquatableMixin {
   @HiveField(8)
   String? gifAsset;
 
+  @HiveField(9)
+  String? notes;
+
   Exercise({
     required this.id,
     required this.name,
@@ -43,6 +46,7 @@ class Exercise extends HiveObject with EquatableMixin {
     required this.secondaryMuscles,
     required this.instructions,
     this.gifAsset,
+    this.notes,
   });
 
   factory Exercise.create({
@@ -54,6 +58,7 @@ class Exercise extends HiveObject with EquatableMixin {
     List<String>? secondaryMuscles,
     List<String>? instructions,
     String? gifAsset,
+    String? notes,
   }) {
     return Exercise(
       id: const Uuid().v4(),
@@ -65,6 +70,7 @@ class Exercise extends HiveObject with EquatableMixin {
       secondaryMuscles: secondaryMuscles ?? [],
       instructions: instructions ?? [],
       gifAsset: gifAsset,
+      notes: notes,
     );
   }
 
@@ -84,6 +90,7 @@ class Exercise extends HiveObject with EquatableMixin {
     'secondaryMuscles': secondaryMuscles,
     'instructions': instructions,
     'gifAsset': gifAsset,
+    'notes': notes,
   };
 
   factory Exercise.fromJson(Map<String, dynamic> json) => Exercise(
@@ -118,6 +125,7 @@ class Exercise extends HiveObject with EquatableMixin {
     gifAsset: json['gifUrl'] != null
         ? 'assets/exercises/media/${json['exerciseId'] as String}.gif'
         : null,
+    notes: json['notes'] as String?,
   );
 
   @override
@@ -131,5 +139,6 @@ class Exercise extends HiveObject with EquatableMixin {
     secondaryMuscles,
     instructions,
     gifAsset,
+    notes,
   ];
 }
