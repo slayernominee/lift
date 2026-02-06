@@ -19,44 +19,14 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
   String _searchQuery = '';
 
   // List data from JSON files
-  List<String> _allMuscles = [];
-  List<String> _allBodyParts = [];
-  List<String> _allEquipment = [];
-  bool _isLoadingData = true;
+  List<String> get _allMuscles => context.read<WorkoutProvider>().muscles;
+  List<String> get _allBodyParts => context.read<WorkoutProvider>().bodyParts;
+  List<String> get _allEquipment => context.read<WorkoutProvider>().equipment;
+  bool get _isLoadingData => false;
 
   @override
   void initState() {
     super.initState();
-    _loadJsonData();
-  }
-
-  Future<void> _loadJsonData() async {
-    try {
-      final musclesJson = await rootBundle.loadString(
-        'assets/exercises/muscles.json',
-      );
-      final bodyPartsJson = await rootBundle.loadString(
-        'assets/exercises/bodyparts.json',
-      );
-      final equipmentJson = await rootBundle.loadString(
-        'assets/exercises/equipments.json',
-      );
-
-      final musclesList = json.decode(musclesJson) as List;
-      final bodyPartsList = json.decode(bodyPartsJson) as List;
-      final equipmentList = json.decode(equipmentJson) as List;
-
-      setState(() {
-        _allMuscles = musclesList.map((e) => e['name'] as String).toList();
-        _allBodyParts = bodyPartsList.map((e) => e['name'] as String).toList();
-        _allEquipment = equipmentList.map((e) => e['name'] as String).toList();
-        _isLoadingData = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoadingData = false;
-      });
-    }
   }
 
   void _showAddExerciseDialog(BuildContext context) {
@@ -403,103 +373,106 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
 
           final sortedKeys = groupedExercises.keys.toList()..sort();
 
+          // Flatten the list for lazy loading
+          final flatList = <dynamic>[];
+          for (final key in sortedKeys) {
+            flatList.add(key); // Header
+            final groupExercises = groupedExercises[key]!;
+            groupExercises.sort((a, b) => a.name.compareTo(b.name));
+            flatList.addAll(groupExercises);
+          }
+
           return ListView.builder(
             padding: const EdgeInsets.only(bottom: 80),
-            itemCount: sortedKeys.length,
+            itemCount: flatList.length,
             itemBuilder: (context, index) {
-              final group = sortedKeys[index];
-              final groupExercises = groupedExercises[group]!;
-              groupExercises.sort((a, b) => a.name.compareTo(b.name));
+              final item = flatList[index];
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-                    child: Text(
-                      group.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+              if (item is String) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                  child: Text(
+                    item.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
-                  ...groupExercises.map((exercise) {
-                    final card = _ExerciseCard(
-                      exercise: exercise,
-                      onTap: () {
-                        if (widget.onSelect != null) {
-                          widget.onSelect!(exercise);
-                        } else {
-                          _showEditExerciseDialog(context, exercise);
-                        }
-                      },
-                    );
-
+                );
+              } else if (item is Exercise) {
+                final card = _ExerciseCard(
+                  exercise: item,
+                  onTap: () {
                     if (widget.onSelect != null) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
-                        ),
-                        child: card,
-                      );
+                      widget.onSelect!(item);
+                    } else {
+                      _showEditExerciseDialog(context, item);
                     }
+                  },
+                );
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
+                if (widget.onSelect != null) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    child: card,
+                  );
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
+                  child: Dismissible(
+                    key: Key(item.id),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Dismissible(
-                        key: Key(exercise.id),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 20),
-                          decoration: BoxDecoration(
-                            color: Colors.redAccent,
-                            borderRadius: BorderRadius.circular(12),
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    confirmDismiss: (direction) async {
+                      return await showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Delete Exercise'),
+                          content: Text(
+                            'Are you sure you want to delete "${item.name}"?',
                           ),
-                          child: const Icon(Icons.delete, color: Colors.white),
-                        ),
-                        confirmDismiss: (direction) async {
-                          return await showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Delete Exercise'),
-                              content: Text(
-                                'Are you sure you want to delete "${exercise.name}"?',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () =>
-                                      Navigator.pop(context, false),
-                                  child: const Text('Cancel'),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, true),
-                                  child: const Text(
-                                    'Delete',
-                                    style: TextStyle(color: Colors.redAccent),
-                                  ),
-                                ),
-                              ],
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
                             ),
-                          );
-                        },
-                        onDismissed: (direction) {
-                          exercise.delete();
-                          setState(() {});
-                        },
-                        child: card,
-                      ),
-                    );
-                  }),
-                ],
-              );
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.redAccent),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    onDismissed: (direction) {
+                      item.delete();
+                      setState(() {});
+                    },
+                    child: card,
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
             },
           );
         },

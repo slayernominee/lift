@@ -19,9 +19,41 @@ class WorkoutProvider with ChangeNotifier {
 
   List<ExerciseLog> _logs = [];
 
+  List<String> _muscles = [];
+  List<String> _bodyParts = [];
+  List<String> _equipment = [];
+
   WorkoutProvider() {
     _initDefaults();
     _initDatabase();
+    _loadMetadata();
+  }
+
+  Future<void> _loadMetadata() async {
+    try {
+      if (_muscles.isNotEmpty) return;
+
+      final musclesJson = await rootBundle.loadString(
+        'assets/exercises/muscles.json',
+      );
+      final bodyPartsJson = await rootBundle.loadString(
+        'assets/exercises/bodyparts.json',
+      );
+      final equipmentJson = await rootBundle.loadString(
+        'assets/exercises/equipments.json',
+      );
+
+      final musclesList = json.decode(musclesJson) as List;
+      final bodyPartsList = json.decode(bodyPartsJson) as List;
+      final equipmentList = json.decode(equipmentJson) as List;
+
+      _muscles = musclesList.map((e) => e['name'] as String).toList();
+      _bodyParts = bodyPartsList.map((e) => e['name'] as String).toList();
+      _equipment = equipmentList.map((e) => e['name'] as String).toList();
+      notifyListeners();
+    } catch (e) {
+      // Ignore errors
+    }
   }
 
   Future<void> _initDatabase() async {
@@ -64,6 +96,10 @@ class WorkoutProvider with ChangeNotifier {
   List<Workout> get workouts => _workoutBox.values.toList();
   List<WeightEntry> get weightEntries =>
       _weightBox.values.toList()..sort((a, b) => b.date.compareTo(a.date));
+
+  List<String> get muscles => _muscles;
+  List<String> get bodyParts => _bodyParts;
+  List<String> get equipment => _equipment;
 
   // --- Exercise Methods ---
   void addExercise(Exercise exercise) {
