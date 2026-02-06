@@ -533,6 +533,7 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
                       setState(() {
                         set.reps = tempReps;
                         set.weight = tempWeight;
+                        set.completed = true;
                         _saveLog();
                       });
                       Navigator.pop(context);
@@ -777,6 +778,7 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
                         setState(() {
                           set.reps = 0;
                           set.weight = 0;
+                          set.completed = false;
                           _saveLog();
                         });
                       },

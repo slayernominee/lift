@@ -309,6 +309,14 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
     WorkoutProvider provider,
     int index,
   ) {
+    final todayLog = provider.getLog(
+      workoutExercise.exerciseId,
+      widget.workout.id,
+      DateTime.now(),
+    );
+    final completedSets = todayLog?.sets.where((s) => s.reps > 0).length ?? 0;
+    final isCompleted = completedSets >= workoutExercise.targetSets;
+
     return Dismissible(
       key: ValueKey(workoutExercise.id),
       direction: DismissDirection.endToStart,
@@ -383,18 +391,37 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.primary.withOpacity(0.1),
+                          color: isCompleted
+                              ? Colors.green.withOpacity(0.1)
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(4),
+                          border: isCompleted
+                              ? Border.all(color: Colors.green.withOpacity(0.5))
+                              : null,
                         ),
-                        child: Text(
-                          '${workoutExercise.targetSets} sets',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        child: Row(
+                          children: [
+                            if (isCompleted) ...[
+                              const Icon(
+                                Icons.check,
+                                size: 12,
+                                color: Colors.green,
+                              ),
+                              const SizedBox(width: 4),
+                            ],
+                            Text(
+                              '$completedSets/${workoutExercise.targetSets} sets',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isCompleted
+                                    ? Colors.green
+                                    : Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
