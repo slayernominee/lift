@@ -17,6 +17,7 @@ class ExercisesScreen extends StatefulWidget {
 
 class _ExercisesScreenState extends State<ExercisesScreen> {
   String _searchQuery = '';
+  String? _selectedMuscleFilter;
 
   // List data from JSON files
   List<String> get _allMuscles => context.read<WorkoutProvider>().muscles;
@@ -340,7 +341,17 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
       ),
       body: Consumer<WorkoutProvider>(
         builder: (context, provider, child) {
+          final availableMuscles = provider.exercises
+              .map((e) => e.primaryTargetMuscle)
+              .toSet();
+
           final exercises = provider.exercises.where((e) {
+            final matchesFilter =
+                _selectedMuscleFilter == null ||
+                e.targetMuscles.contains(_selectedMuscleFilter);
+
+            if (!matchesFilter) return false;
+
             return e.name.toLowerCase().contains(_searchQuery) ||
                 e.targetMuscles.any(
                   (m) => m.toLowerCase().contains(_searchQuery),
@@ -355,14 +366,6 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                   (sm) => sm.toLowerCase().contains(_searchQuery),
                 );
           }).toList();
-
-          if (exercises.isEmpty && _searchQuery.isEmpty) {
-            return const Center(child: Text('No exercises found. Add some!'));
-          }
-
-          if (exercises.isEmpty && _searchQuery.isNotEmpty) {
-            return const Center(child: Text('No exercises match your search.'));
-          }
 
           // Group exercises by primary target muscle
           final groupedExercises = <String, List<Exercise>>{};
@@ -382,98 +385,158 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
             flatList.addAll(groupExercises);
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 80),
-            itemCount: flatList.length,
-            itemBuilder: (context, index) {
-              final item = flatList[index];
-
-              if (item is String) {
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-                  child: Text(
-                    item.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                      color: Theme.of(context).colorScheme.primary,
+          return Column(
+            children: [
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: Row(
+                  children: [
+                    FilterChip(
+                      label: const Text('All'),
+                      selected: _selectedMuscleFilter == null,
+                      onSelected: (selected) {
+                        setState(() {
+                          _selectedMuscleFilter = null;
+                        });
+                      },
                     ),
-                  ),
-                );
-              } else if (item is Exercise) {
-                final card = _ExerciseCard(
-                  exercise: item,
-                  onTap: () {
-                    if (widget.onSelect != null) {
-                      widget.onSelect!(item);
-                    } else {
-                      _showEditExerciseDialog(context, item);
-                    }
-                  },
-                );
-
-                if (widget.onSelect != null) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
-                    child: card,
-                  );
-                }
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
-                  ),
-                  child: Dismissible(
-                    key: Key(item.id),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.redAccent,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.delete, color: Colors.white),
-                    ),
-                    confirmDismiss: (direction) async {
-                      return await showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Delete Exercise'),
-                          content: Text(
-                            'Are you sure you want to delete "${item.name}"?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
+                    const SizedBox(width: 8),
+                    ...provider.muscles
+                        .where((m) => availableMuscles.contains(m))
+                        .map((muscle) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: FilterChip(
+                              label: Text(muscle),
+                              selected: _selectedMuscleFilter == muscle,
+                              onSelected: (selected) {
+                                setState(() {
+                                  _selectedMuscleFilter = selected
+                                      ? muscle
+                                      : null;
+                                });
+                              },
                             ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: const Text(
-                                'Delete',
-                                style: TextStyle(color: Colors.redAccent),
-                              ),
-                            ),
-                          ],
+                          );
+                        }),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: exercises.isEmpty
+                    ? Center(
+                        child: Text(
+                          _searchQuery.isEmpty && _selectedMuscleFilter == null
+                              ? 'No exercises found. Add some!'
+                              : 'No exercises match your criteria.',
                         ),
-                      );
-                    },
-                    onDismissed: (direction) {
-                      item.delete();
-                      setState(() {});
-                    },
-                    child: card,
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            },
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 80),
+                        itemCount: flatList.length,
+                        itemBuilder: (context, index) {
+                          final item = flatList[index];
+
+                          if (item is String) {
+                            return Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                              child: Text(
+                                item.toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            );
+                          } else if (item is Exercise) {
+                            final card = _ExerciseCard(
+                              exercise: item,
+                              onTap: () {
+                                if (widget.onSelect != null) {
+                                  widget.onSelect!(item);
+                                } else {
+                                  _showEditExerciseDialog(context, item);
+                                }
+                              },
+                            );
+
+                            if (widget.onSelect != null) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 4,
+                                ),
+                                child: card,
+                              );
+                            }
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              child: Dismissible(
+                                key: Key(item.id),
+                                direction: DismissDirection.endToStart,
+                                background: Container(
+                                  alignment: Alignment.centerRight,
+                                  padding: const EdgeInsets.only(right: 20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.redAccent,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.delete,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                confirmDismiss: (direction) async {
+                                  return await showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Delete Exercise'),
+                                      content: Text(
+                                        'Are you sure you want to delete "${item.name}"?',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          child: const Text(
+                                            'Delete',
+                                            style: TextStyle(
+                                              color: Colors.redAccent,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                                onDismissed: (direction) {
+                                  item.delete();
+                                  setState(() {});
+                                },
+                                child: card,
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+              ),
+            ],
           );
         },
       ),
