@@ -27,6 +27,7 @@ void main() async {
   await Hive.openBox<Exercise>('exercises');
   await Hive.openBox<Workout>('workouts');
   await Hive.openBox<WeightEntry>('weights');
+  await Hive.openBox<dynamic>('settings');
   runApp(
     MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => WorkoutProvider())],

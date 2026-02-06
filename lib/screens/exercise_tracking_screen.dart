@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lift/widgets/exercise_timer.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -115,7 +116,12 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
                     ),
                   ),
                 ),
-              Text(widget.exercise.name),
+              Flexible(
+                child: Text(
+                  widget.exercise.name,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
               const SizedBox(width: 4),
               Icon(
                 _showDetails ? Icons.expand_less : Icons.expand_more,
@@ -124,6 +130,7 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
             ],
           ),
         ),
+        actions: const [ExerciseTimer(), SizedBox(width: 8)],
       ),
       body: Column(
         children: [

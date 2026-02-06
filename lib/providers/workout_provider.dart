@@ -75,6 +75,15 @@ class WorkoutProvider with ChangeNotifier {
     return _exerciseBox.get(id);
   }
 
+  // --- Settings Methods ---
+  int get timerDuration =>
+      Hive.box<dynamic>('settings').get('timer_duration', defaultValue: 120);
+
+  void setTimerDuration(int seconds) {
+    Hive.box<dynamic>('settings').put('timer_duration', seconds);
+    notifyListeners();
+  }
+
   // --- Workout Methods ---
   void addWorkout(Workout workout) {
     _workoutBox.put(workout.id, workout);

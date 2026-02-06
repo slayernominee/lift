@@ -117,6 +117,59 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _showTimerDurationDialog(BuildContext context) async {
+    final provider = context.read<WorkoutProvider>();
+    final currentDuration = provider.timerDuration;
+
+    final selectedDuration = await showDialog<int>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Set Timer Duration'),
+        children: [
+          for (final seconds in [30, 60, 90, 120, 150, 180, 240, 300])
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, seconds),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _formatDuration(seconds),
+                      style: TextStyle(
+                        fontWeight: currentDuration == seconds
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                    if (currentDuration == seconds)
+                      Icon(
+                        Icons.check,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 20,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+
+    if (selectedDuration != null) {
+      provider.setTimerDuration(selectedDuration);
+    }
+  }
+
+  String _formatDuration(int seconds) {
+    final minutes = seconds ~/ 60;
+    final remainingSeconds = seconds % 60;
+    if (remainingSeconds == 0) {
+      return '$minutes min';
+    }
+    return '$minutes min $remainingSeconds s';
+  }
+
   Future<void> _launchURL(String urlString) async {
     final Uri url = Uri.parse(urlString);
     if (!await launchUrl(url)) {
@@ -133,6 +186,35 @@ class SettingsScreen extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 20),
+
+            // General Section
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'General',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Timer Setting
+            Consumer<WorkoutProvider>(
+              builder: (context, provider, child) {
+                return Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.timer, color: Colors.orange),
+                    title: const Text('Rest Timer'),
+                    subtitle: Text(
+                      'Default duration: ${_formatDuration(provider.timerDuration)}',
+                    ),
+                    trailing: const Icon(Icons.chevron_right, size: 20),
+                    onTap: () => _showTimerDurationDialog(context),
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: 24),
 
             // Data Management Section
             const Align(
@@ -259,7 +341,7 @@ class SettingsScreen extends StatelessWidget {
             ),
             const Center(
               child: Text(
-                'Version 1.4.0',
+                'Version 1.5.0',
                 style: TextStyle(color: Colors.grey),
               ),
             ),
