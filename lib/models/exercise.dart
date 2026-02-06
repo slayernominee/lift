@@ -94,9 +94,9 @@ class Exercise extends HiveObject with EquatableMixin {
   };
 
   factory Exercise.fromJson(Map<String, dynamic> json) => Exercise(
-    id: json['exerciseId'] as String,
+    id: (json['exerciseId'] ?? json['id']) as String,
     name: json['name'] as String,
-    description: null,
+    description: json['description'] as String?,
     targetMuscles:
         (json['targetMuscles'] as List<dynamic>?)
             ?.map((e) => e as String)
@@ -122,9 +122,11 @@ class Exercise extends HiveObject with EquatableMixin {
             ?.map((e) => e as String)
             .toList() ??
         [],
-    gifAsset: json['gifUrl'] != null
-        ? 'assets/exercises/media/${json['exerciseId'] as String}.gif'
-        : null,
+    gifAsset:
+        json['gifAsset'] as String? ??
+        (json['gifUrl'] != null
+            ? 'assets/exercises/media/${(json['exerciseId'] ?? json['id']) as String}.gif'
+            : null),
     notes: json['notes'] as String?,
   );
 

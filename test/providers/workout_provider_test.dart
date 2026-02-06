@@ -39,7 +39,7 @@ void main() {
       test('should serialize workout with all fields', () {
         final exercise = Exercise.create(
           name: 'Bench Press',
-          muscleGroup: 'Chest',
+          targetMuscles: ['Chest'],
         );
         final workout = Workout.create(name: 'Test Workout');
         workout.exercises.add(
@@ -68,10 +68,13 @@ void main() {
       });
 
       test('should serialize workout with multiple exercises', () {
-        final exercise1 = Exercise.create(name: 'Squat', muscleGroup: 'Legs');
+        final exercise1 = Exercise.create(
+          name: 'Squat',
+          targetMuscles: ['Legs'],
+        );
         final exercise2 = Exercise.create(
           name: 'Bench Press',
-          muscleGroup: 'Chest',
+          targetMuscles: ['Chest'],
         );
         final workout = Workout.create(name: 'Full Body');
         workout.exercises.add(
@@ -222,7 +225,7 @@ void main() {
       test('should handle single workout JSON object', () {
         final exercise = Exercise.create(
           name: 'Bench Press',
-          muscleGroup: 'Chest',
+          targetMuscles: ['Chest'],
         );
         exerciseBox.put(exercise.id, exercise);
 
@@ -233,7 +236,7 @@ void main() {
               'id': exercise.id,
               'name': 'Bench Press',
               'description': null,
-              'muscleGroup': 'Chest',
+              'targetMuscles': ['Chest'],
             },
           ],
           'workout': {
@@ -255,10 +258,13 @@ void main() {
       });
 
       test('should handle multiple workouts JSON array', () {
-        final exercise1 = Exercise.create(name: 'Squat', muscleGroup: 'Legs');
+        final exercise1 = Exercise.create(
+          name: 'Squat',
+          targetMuscles: ['Legs'],
+        );
         final exercise2 = Exercise.create(
           name: 'Bench Press',
-          muscleGroup: 'Chest',
+          targetMuscles: ['Chest'],
         );
         exerciseBox.put(exercise1.id, exercise1);
         exerciseBox.put(exercise2.id, exercise2);
@@ -270,13 +276,13 @@ void main() {
               'id': exercise1.id,
               'name': 'Squat',
               'description': null,
-              'muscleGroup': 'Legs',
+              'targetMuscles': ['Legs'],
             },
             {
               'id': exercise2.id,
               'name': 'Bench Press',
               'description': null,
-              'muscleGroup': 'Chest',
+              'targetMuscles': ['Chest'],
             },
           ],
           'workouts': [
@@ -316,15 +322,17 @@ void main() {
           'exercises': [
             {
               'id': 'ex-1',
+              'exerciseId': 'ex-1',
               'name': 'Deadlift',
               'description': null,
-              'muscleGroup': 'Back',
+              'targetMuscles': ['Back'],
             },
             {
               'id': 'ex-2',
+              'exerciseId': 'ex-2',
               'name': 'Lat Pulldown',
               'description': 'Great for lats',
-              'muscleGroup': 'Back',
+              'targetMuscles': ['Back'],
             },
           ],
           'workouts': [
@@ -364,7 +372,7 @@ void main() {
 
         final deadlift = exerciseBox.get('ex-1');
         expect(deadlift?.name, 'Deadlift');
-        expect(deadlift?.muscleGroup, 'Back');
+        expect(deadlift?.targetMuscles.first, 'Back');
 
         final latPulldown = exerciseBox.get('ex-2');
         expect(latPulldown?.name, 'Lat Pulldown');
@@ -375,7 +383,7 @@ void main() {
         // Create an existing exercise
         final existingExercise = Exercise.create(
           name: 'Bench Press',
-          muscleGroup: 'Chest',
+          targetMuscles: ['Chest'],
         );
         exerciseBox.put(existingExercise.id, existingExercise);
         final existingId = existingExercise.id;
@@ -385,15 +393,17 @@ void main() {
           'exercises': [
             {
               'id': existingId,
+              'exerciseId': existingId,
               'name': 'Bench Press',
               'description': null,
-              'muscleGroup': 'Chest',
+              'targetMuscles': ['Chest'],
             },
             {
               'id': 'new-ex-1',
+              'exerciseId': 'new-ex-1',
               'name': 'Incline Dumbbell Press',
               'description': null,
-              'muscleGroup': 'Chest',
+              'targetMuscles': ['Chest'],
             },
           ],
         };
@@ -442,7 +452,7 @@ void main() {
                 'id': 'ex-1',
                 'name': 'Squat',
                 'description': null,
-                'muscleGroup': 'Legs',
+                'targetMuscles': ['Legs'],
               },
             ],
             'workout': {

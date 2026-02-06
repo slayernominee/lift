@@ -17,7 +17,7 @@ class ExercisesScreen extends StatefulWidget {
 
 class _ExercisesScreenState extends State<ExercisesScreen> {
   String _searchQuery = '';
-  String? _selectedMuscleFilter;
+  String? _selectedBodyPartFilter;
 
   // List data from JSON files
   List<String> get _allMuscles => context.read<WorkoutProvider>().muscles;
@@ -341,14 +341,14 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
       ),
       body: Consumer<WorkoutProvider>(
         builder: (context, provider, child) {
-          final availableMuscles = provider.exercises
-              .map((e) => e.primaryTargetMuscle)
+          final availableBodyParts = provider.exercises
+              .expand((e) => e.bodyParts)
               .toSet();
 
           final exercises = provider.exercises.where((e) {
             final matchesFilter =
-                _selectedMuscleFilter == null ||
-                e.targetMuscles.contains(_selectedMuscleFilter);
+                _selectedBodyPartFilter == null ||
+                e.bodyParts.contains(_selectedBodyPartFilter);
 
             if (!matchesFilter) return false;
 
@@ -397,26 +397,26 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                   children: [
                     FilterChip(
                       label: const Text('All'),
-                      selected: _selectedMuscleFilter == null,
+                      selected: _selectedBodyPartFilter == null,
                       onSelected: (selected) {
                         setState(() {
-                          _selectedMuscleFilter = null;
+                          _selectedBodyPartFilter = null;
                         });
                       },
                     ),
                     const SizedBox(width: 8),
-                    ...provider.muscles
-                        .where((m) => availableMuscles.contains(m))
-                        .map((muscle) {
+                    ...provider.bodyParts
+                        .where((bp) => availableBodyParts.contains(bp))
+                        .map((bodyPart) {
                           return Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: FilterChip(
-                              label: Text(muscle),
-                              selected: _selectedMuscleFilter == muscle,
+                              label: Text(bodyPart),
+                              selected: _selectedBodyPartFilter == bodyPart,
                               onSelected: (selected) {
                                 setState(() {
-                                  _selectedMuscleFilter = selected
-                                      ? muscle
+                                  _selectedBodyPartFilter = selected
+                                      ? bodyPart
                                       : null;
                                 });
                               },
@@ -430,7 +430,8 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                 child: exercises.isEmpty
                     ? Center(
                         child: Text(
-                          _searchQuery.isEmpty && _selectedMuscleFilter == null
+                          _searchQuery.isEmpty &&
+                                  _selectedBodyPartFilter == null
                               ? 'No exercises found. Add some!'
                               : 'No exercises match your criteria.',
                         ),
