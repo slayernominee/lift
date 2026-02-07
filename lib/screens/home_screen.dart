@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lift/screens/workouts_screen.dart';
 import 'package:lift/screens/exercises_screen.dart';
+import 'package:lift/screens/stats_screen.dart';
 import 'package:lift/screens/weight_screen.dart';
 import 'package:lift/screens/settings_screen.dart';
 
@@ -17,6 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = [
     const WorkoutsScreen(),
     const ExercisesScreen(),
+    const StatsScreen(),
     const WeightScreen(),
     const SettingsScreen(),
   ];
@@ -46,6 +48,11 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.fitness_center_outlined),
             selectedIcon: Icon(Icons.fitness_center),
             label: 'Exercises',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.bar_chart_outlined),
+            selectedIcon: Icon(Icons.bar_chart),
+            label: 'Stats',
           ),
           NavigationDestination(
             icon: Icon(Icons.monitor_weight_outlined),

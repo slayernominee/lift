@@ -92,6 +92,7 @@ class WorkoutProvider with ChangeNotifier {
   }
 
   // --- Getters ---
+  List<ExerciseLog> get logs => _logs;
   List<Exercise> get exercises => _exerciseBox.values.toList();
   List<Workout> get workouts {
     final allWorkouts = _workoutBox.values.toList();
