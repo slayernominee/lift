@@ -12,6 +12,8 @@ class WorkoutsScreen extends StatefulWidget {
 }
 
 class _WorkoutsScreenState extends State<WorkoutsScreen> {
+  bool _isReorderMode = false;
+
   void _showAddWorkoutDialog(BuildContext context) {
     final controller = TextEditingController();
     showDialog(
@@ -45,6 +47,19 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     );
   }
 
+  void _onReorder(int oldIndex, int newIndex) {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final provider = context.read<WorkoutProvider>();
+    final workouts = List<Workout>.from(provider.workouts);
+    final item = workouts.removeAt(oldIndex);
+    workouts.insert(newIndex, item);
+
+    final newOrder = workouts.map((w) => w.id).toList();
+    provider.setWorkoutOrder(newOrder);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,9 +67,14 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
         title: const Text('Workouts'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showAddWorkoutDialog(context),
+            icon: Icon(_isReorderMode ? Icons.check : Icons.swap_vert),
+            onPressed: () => setState(() => _isReorderMode = !_isReorderMode),
           ),
+          if (!_isReorderMode)
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => _showAddWorkoutDialog(context),
+            ),
         ],
       ),
       body: Consumer<WorkoutProvider>(
@@ -63,6 +83,40 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
 
           if (workouts.isEmpty) {
             return const Center(child: Text('No workouts yet. Create one!'));
+          }
+
+          if (_isReorderMode) {
+            return ReorderableListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: workouts.length,
+              onReorder: _onReorder,
+              itemBuilder: (context, index) {
+                final workout = workouts[index];
+                return Card(
+                  key: ValueKey(workout.id),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    title: Text(
+                      workout.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text('${workout.exercises.length} exercises'),
+                    trailing: const Icon(Icons.drag_handle),
+                  ),
+                );
+              },
+            );
           }
 
           return ListView.separated(
@@ -148,11 +202,13 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'workouts_fab',
-        onPressed: () => _showAddWorkoutDialog(context),
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: _isReorderMode
+          ? null
+          : FloatingActionButton(
+              heroTag: 'workouts_fab',
+              onPressed: () => _showAddWorkoutDialog(context),
+              child: const Icon(Icons.add),
+            ),
     );
   }
 }

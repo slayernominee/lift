@@ -93,13 +93,39 @@ class WorkoutProvider with ChangeNotifier {
 
   // --- Getters ---
   List<Exercise> get exercises => _exerciseBox.values.toList();
-  List<Workout> get workouts => _workoutBox.values.toList();
+  List<Workout> get workouts {
+    final allWorkouts = _workoutBox.values.toList();
+    final order = workoutOrder;
+    if (order.isEmpty) return allWorkouts;
+
+    allWorkouts.sort((a, b) {
+      final indexA = order.indexOf(a.id);
+      final indexB = order.indexOf(b.id);
+      if (indexA == -1 && indexB == -1) return 0;
+      if (indexA == -1) return 1;
+      if (indexB == -1) return -1;
+      return indexA.compareTo(indexB);
+    });
+    return allWorkouts;
+  }
+
   List<WeightEntry> get weightEntries =>
       _weightBox.values.toList()..sort((a, b) => b.date.compareTo(a.date));
 
   List<String> get muscles => _muscles;
   List<String> get bodyParts => _bodyParts;
   List<String> get equipment => _equipment;
+
+  List<String> get workoutOrder => List<String>.from(
+    Hive.box<dynamic>(
+      'settings',
+    ).get('workout_order', defaultValue: <String>[]),
+  );
+
+  void setWorkoutOrder(List<String> order) {
+    Hive.box<dynamic>('settings').put('workout_order', order);
+    notifyListeners();
+  }
 
   // --- Exercise Methods ---
   void addExercise(Exercise exercise) {
@@ -123,6 +149,9 @@ class WorkoutProvider with ChangeNotifier {
   // --- Workout Methods ---
   void addWorkout(Workout workout) {
     _workoutBox.put(workout.id, workout);
+    final order = workoutOrder;
+    order.add(workout.id);
+    Hive.box<dynamic>('settings').put('workout_order', order);
     notifyListeners();
   }
 
@@ -133,6 +162,11 @@ class WorkoutProvider with ChangeNotifier {
 
   void deleteWorkout(String id) {
     _workoutBox.delete(id);
+    final order = workoutOrder;
+    if (order.contains(id)) {
+      order.remove(id);
+      Hive.box<dynamic>('settings').put('workout_order', order);
+    }
     notifyListeners();
   }
 
