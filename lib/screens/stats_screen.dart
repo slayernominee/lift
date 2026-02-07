@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-
 import 'package:lift/providers/workout_provider.dart';
 
 class StatsScreen extends StatefulWidget {
@@ -12,7 +11,7 @@ class StatsScreen extends StatefulWidget {
 }
 
 class _StatsScreenState extends State<StatsScreen> {
-  DateTime _selectedMonth = DateTime.now();
+  DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
 
   void _updateMonth(DateTime date) {
     setState(() {
@@ -113,19 +112,27 @@ class _StatsScreenState extends State<StatsScreen> {
               log.date.month == _selectedMonth.month;
         }).toList();
 
-        // Calculate stats
+        // Stats calculation
         int totalSets = 0;
         int completedExercises = 0;
         final workoutsAttempted = <String, Set<DateTime>>{};
+        final setsPerExercise = <String, int>{};
+        final completedExercisesPerId = <String, int>{};
+        final completedWorkoutsPerId = <String, int>{};
+        final trainingDays = <int>{};
 
-        // Cache workouts for faster lookup
         final workoutMap = {for (var w in provider.workouts) w.id: w};
 
         for (final log in monthlyLogs) {
           final validSets = log.sets.where((s) => s.reps > 0).length;
           totalSets += validSets;
+          trainingDays.add(log.date.day);
 
-          // Check completed exercises
+          if (validSets > 0) {
+            setsPerExercise[log.exerciseId] =
+                (setsPerExercise[log.exerciseId] ?? 0) + validSets;
+          }
+
           final workout = workoutMap[log.workoutId];
           if (workout != null) {
             try {
@@ -134,13 +141,12 @@ class _StatsScreenState extends State<StatsScreen> {
               );
               if (validSets >= workoutExercise.targetSets) {
                 completedExercises++;
+                completedExercisesPerId[log.exerciseId] =
+                    (completedExercisesPerId[log.exerciseId] ?? 0) + 1;
               }
-            } catch (_) {
-              // Exercise might have been removed from workout
-            }
+            } catch (_) {}
           }
 
-          // Track unique workout days
           if (!workoutsAttempted.containsKey(log.workoutId)) {
             workoutsAttempted[log.workoutId] = <DateTime>{};
           }
@@ -148,12 +154,13 @@ class _StatsScreenState extends State<StatsScreen> {
           workoutsAttempted[log.workoutId]!.add(dateKey);
         }
 
-        // Calculate completed workouts
         int completedWorkouts = 0;
         workoutsAttempted.forEach((workoutId, dates) {
           for (final date in dates) {
             if (provider.isWorkoutCompleted(workoutId, date)) {
               completedWorkouts++;
+              completedWorkoutsPerId[workoutId] =
+                  (completedWorkoutsPerId[workoutId] ?? 0) + 1;
             }
           }
         });
@@ -162,11 +169,17 @@ class _StatsScreenState extends State<StatsScreen> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
+              _buildMonthMinimap(trainingDays),
+              const SizedBox(height: 16),
               _buildStatCard(
-                title: 'Total Sets',
-                value: totalSets.toString(),
-                icon: Icons.layers,
-                color: Colors.blue,
+                title: 'Finished Workouts',
+                value: completedWorkouts.toString(),
+                icon: Icons.check_circle,
+                color: Colors.green,
+                children: _buildTopList(
+                  completedWorkoutsPerId,
+                  (id) => workoutMap[id]?.name ?? 'Unknown',
+                ),
               ),
               const SizedBox(height: 12),
               _buildStatCard(
@@ -174,13 +187,21 @@ class _StatsScreenState extends State<StatsScreen> {
                 value: completedExercises.toString(),
                 icon: Icons.fitness_center,
                 color: Colors.orange,
+                children: _buildTopList(
+                  completedExercisesPerId,
+                  (id) => provider.getExerciseById(id)?.name ?? 'Unknown',
+                ),
               ),
               const SizedBox(height: 12),
               _buildStatCard(
-                title: 'Finished Workouts',
-                value: completedWorkouts.toString(),
-                icon: Icons.check_circle,
-                color: Colors.green,
+                title: 'Total Sets',
+                value: totalSets.toString(),
+                icon: Icons.layers,
+                color: Colors.blue,
+                children: _buildTopList(
+                  setsPerExercise,
+                  (id) => provider.getExerciseById(id)?.name ?? 'Unknown',
+                ),
               ),
             ],
           ),
@@ -189,11 +210,86 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
+  Widget _buildMonthMinimap(Set<int> trainingDays) {
+    final daysInMonth = DateTime(
+      _selectedMonth.year,
+      _selectedMonth.month + 1,
+      0,
+    ).day;
+    final firstDayWeekday = DateTime(
+      _selectedMonth.year,
+      _selectedMonth.month,
+      1,
+    ).weekday;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: Theme.of(context).dividerColor.withOpacity(0.1),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            const Text(
+              'Training Days',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                mainAxisSpacing: 4,
+                crossAxisSpacing: 4,
+              ),
+              itemCount: daysInMonth + (firstDayWeekday - 1),
+              itemBuilder: (context, index) {
+                if (index < firstDayWeekday - 1) {
+                  return const SizedBox.shrink();
+                }
+                final day = index - (firstDayWeekday - 2);
+                final isTrained = trainingDays.contains(day);
+                return Container(
+                  decoration: BoxDecoration(
+                    color: isTrained
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(
+                            context,
+                          ).colorScheme.surfaceVariant.withOpacity(0.3),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      day.toString(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: isTrained
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color: isTrained ? Colors.white : Colors.grey,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildStatCard({
     required String title,
     required String value,
     required IconData icon,
     required Color color,
+    List<Widget>? children,
   }) {
     return Card(
       elevation: 0,
@@ -205,40 +301,93 @@ class _StatsScreenState extends State<StatsScreen> {
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: Row(
+        child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  child: Icon(icon, color: color, size: 24),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
+            if (children != null && children.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Divider(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+              const SizedBox(height: 8),
+              ...children,
+            ],
           ],
         ),
       ),
     );
+  }
+
+  List<Widget> _buildTopList(
+    Map<String, int> counts,
+    String Function(String id) getName,
+  ) {
+    if (counts.isEmpty) return [];
+    final sortedEntries = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final top3 = sortedEntries.take(3);
+    return top3.map((entry) {
+      final name = getName(entry.key);
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                name,
+                style: const TextStyle(fontSize: 13),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${entry.value}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList();
   }
 }
