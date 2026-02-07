@@ -371,90 +371,98 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
           ),
         ),
         child: ListTile(
-          contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
+          leading: GestureDetector(
+            onTap: () => _editSets(workoutExercise),
+            child: SizedBox(
+              width: 50,
+              height: 50,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: CircularProgressIndicator(
+                      value: workoutExercise.targetSets > 0
+                          ? completedSets / workoutExercise.targetSets
+                          : 0,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceVariant,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        isCompleted
+                            ? Colors.green
+                            : Theme.of(context).colorScheme.primary,
+                      ),
+                      strokeWidth: 4,
+                    ),
+                  ),
+                  if (isCompleted)
+                    const Icon(Icons.check, color: Colors.green, size: 24)
+                  else
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '$completedSets',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Container(
+                          height: 1,
+                          width: 14,
+                          color: Theme.of(context).dividerColor,
+                          margin: const EdgeInsets.symmetric(vertical: 1),
+                        ),
+                        Text(
+                          '${workoutExercise.targetSets}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Theme.of(context).colorScheme.secondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
           title: Text(
             exercise?.name ?? 'Unknown Exercise',
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => _editSets(workoutExercise),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isCompleted
-                              ? Colors.green.withOpacity(0.1)
-                              : Theme.of(
-                                  context,
-                                ).colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(4),
-                          border: isCompleted
-                              ? Border.all(color: Colors.green.withOpacity(0.5))
-                              : null,
-                        ),
-                        child: Row(
-                          children: [
-                            if (isCompleted) ...[
-                              const Icon(
-                                Icons.check,
-                                size: 12,
-                                color: Colors.green,
-                              ),
-                              const SizedBox(width: 4),
-                            ],
-                            Text(
-                              '$completedSets/${workoutExercise.targetSets} sets',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isCompleted
-                                    ? Colors.green
-                                    : Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (exercise?.targetMuscles.isNotEmpty ?? false) ...[
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          exercise!.targetMuscles.join(', '),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                if (exercise?.description != null &&
-                    exercise!.description!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    exercise.description!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (exercise?.targetMuscles.isNotEmpty ?? false)
+                Text(
+                  exercise!.targetMuscles.join(', '),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
-                ],
+                ),
+              if (exercise?.description != null &&
+                  exercise!.description!.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  exercise.description!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ],
-            ),
+            ],
           ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
