@@ -92,6 +92,11 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
               onReorder: _onReorder,
               itemBuilder: (context, index) {
                 final workout = workouts[index];
+                final isCompleted = provider.isWorkoutCompleted(
+                  workout.id,
+                  DateTime.now(),
+                );
+
                 return Card(
                   key: ValueKey(workout.id),
                   margin: const EdgeInsets.only(bottom: 12),
@@ -107,9 +112,21 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                       horizontal: 16,
                       vertical: 8,
                     ),
-                    title: Text(
-                      workout.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    title: Row(
+                      children: [
+                        Text(
+                          workout.name,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        if (isCompleted) ...[
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                            size: 18,
+                          ),
+                        ],
+                      ],
                     ),
                     subtitle: Text('${workout.exercises.length} exercises'),
                     trailing: const Icon(Icons.drag_handle),
@@ -125,6 +142,11 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final workout = workouts[index];
+              final isCompleted = provider.isWorkoutCompleted(
+                workout.id,
+                DateTime.now(),
+              );
+
               return Dismissible(
                 key: Key(workout.id),
                 direction: DismissDirection.endToStart,
@@ -177,9 +199,21 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                       horizontal: 16,
                       vertical: 8,
                     ),
-                    title: Text(
-                      workout.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    title: Row(
+                      children: [
+                        Text(
+                          workout.name,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        if (isCompleted) ...[
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                            size: 18,
+                          ),
+                        ],
+                      ],
                     ),
                     subtitle: Text('${workout.exercises.length} exercises'),
                     trailing: const Icon(

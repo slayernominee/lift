@@ -441,6 +441,21 @@ class WorkoutProvider with ChangeNotifier {
     }
   }
 
+  bool isWorkoutCompleted(String workoutId, DateTime date) {
+    final workout = _workoutBox.get(workoutId);
+    if (workout == null || workout.exercises.isEmpty) return false;
+
+    for (final exercise in workout.exercises) {
+      final log = getLog(exercise.exerciseId, workoutId, date);
+      if (log == null) return false;
+
+      final completedSets = log.sets.where((s) => s.reps > 0).length;
+      if (completedSets < exercise.targetSets) return false;
+    }
+
+    return true;
+  }
+
   Future<void> saveLog(ExerciseLog log) async {
     // Save to Memory
     final index = _logs.indexWhere((l) => l.id == log.id);
