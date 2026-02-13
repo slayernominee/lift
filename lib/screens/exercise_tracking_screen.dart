@@ -662,15 +662,25 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
   }
 
   Widget _buildSetRow(int index, ExerciseSet set) {
-    String weightDisplay = set.weight == 0 ? '-' : set.weight.toString();
-    String repsDisplay = set.reps == 0 ? '-' : set.reps.toString();
+    String weightDisplay = (set.weight == 0 && !set.completed)
+        ? '-'
+        : set.weight.toString();
+    String repsDisplay = (set.reps == 0 && !set.completed)
+        ? '-'
+        : set.reps.toString();
 
     String weightPlaceholder = '';
     String repsPlaceholder = '';
-    if (set.weight == 0 && _lastLog != null && _lastLog!.sets.length > index) {
+    if (set.weight == 0 &&
+        !set.completed &&
+        _lastLog != null &&
+        _lastLog!.sets.length > index) {
       weightPlaceholder = '(${_lastLog!.sets[index].weight})';
     }
-    if (set.reps == 0 && _lastLog != null && _lastLog!.sets.length > index) {
+    if (set.reps == 0 &&
+        !set.completed &&
+        _lastLog != null &&
+        _lastLog!.sets.length > index) {
       repsPlaceholder = '(${_lastLog!.sets[index].reps})';
     }
 
@@ -716,8 +726,10 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
                         repsDisplay,
                         style: TextStyle(
                           fontSize: 16,
-                          color: set.reps == 0 ? Colors.grey : null,
-                          fontWeight: set.reps == 0
+                          color: (set.reps == 0 && !set.completed)
+                              ? Colors.grey
+                              : null,
+                          fontWeight: (set.reps == 0 && !set.completed)
                               ? FontWeight.normal
                               : FontWeight.bold,
                         ),
@@ -745,8 +757,10 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
                         weightDisplay,
                         style: TextStyle(
                           fontSize: 16,
-                          color: set.weight == 0 ? Colors.grey : null,
-                          fontWeight: set.weight == 0
+                          color: (set.weight == 0 && !set.completed)
+                              ? Colors.grey
+                              : null,
+                          fontWeight: (set.weight == 0 && !set.completed)
                               ? FontWeight.normal
                               : FontWeight.bold,
                         ),
