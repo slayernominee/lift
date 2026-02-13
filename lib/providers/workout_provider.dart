@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -144,6 +145,41 @@ class WorkoutProvider with ChangeNotifier {
 
   void setTimerDuration(int seconds) {
     Hive.box<dynamic>('settings').put('timer_duration', seconds);
+    notifyListeners();
+  }
+
+  // --- Global Timer State ---
+  Timer? _timer;
+  int _secondsRemaining = 0;
+  bool _isTimerActive = false;
+
+  int get secondsRemaining => _secondsRemaining;
+  bool get isTimerActive => _isTimerActive;
+
+  void startTimer() {
+    _timer?.cancel();
+    _secondsRemaining = timerDuration;
+    _isTimerActive = true;
+    notifyListeners();
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_secondsRemaining > 0) {
+        _secondsRemaining--;
+        notifyListeners();
+      } else {
+        stopTimer();
+        HapticFeedback.heavyImpact();
+        // Vibrate again to be noticeable
+        Future.delayed(const Duration(milliseconds: 500), () {
+          HapticFeedback.heavyImpact();
+        });
+      }
+    });
+  }
+
+  void stopTimer() {
+    _timer?.cancel();
+    _isTimerActive = false;
     notifyListeners();
   }
 
