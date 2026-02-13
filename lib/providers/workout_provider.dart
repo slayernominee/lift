@@ -458,21 +458,39 @@ class WorkoutProvider with ChangeNotifier {
   }
 
   Future<void> saveLog(ExerciseLog log) async {
+    // Check if log has any valid sets
+    final hasValidSets = log.sets.any(
+      (s) => s.reps > 0 || s.weight > 0 || s.completed,
+    );
+
     // Save to Memory
     final index = _logs.indexWhere((l) => l.id == log.id);
-    if (index >= 0) {
-      _logs[index] = log;
+    if (hasValidSets) {
+      if (index >= 0) {
+        _logs[index] = log;
+      } else {
+        _logs.add(log);
+      }
     } else {
-      _logs.add(log);
+      if (index >= 0) {
+        _logs.removeAt(index);
+      }
     }
 
     // Save to SQLite
     final db = await DatabaseHelper.instance.database;
     await db.delete('set_logs', where: 'log_id = ?', whereArgs: [log.id]);
 
+    if (!hasValidSets) {
+      notifyListeners();
+      return;
+    }
+
     final batch = db.batch();
     for (int i = 0; i < log.sets.length; i++) {
       final set = log.sets[i];
+      if (set.reps == 0 && set.weight == 0 && !set.completed) continue;
+
       batch.insert('set_logs', {
         'log_id': log.id,
         'workout_uuid': log.workoutId,

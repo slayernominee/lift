@@ -341,7 +341,7 @@ class SettingsScreen extends StatelessWidget {
             ),
             const Center(
               child: Text(
-                'Version 1.6.0',
+                'Version 1.7.0',
                 style: TextStyle(color: Colors.grey),
               ),
             ),
