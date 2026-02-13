@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:lift/models/log.dart';
 import 'package:lift/providers/workout_provider.dart';
 
 class StatsScreen extends StatefulWidget {
@@ -124,7 +125,7 @@ class _StatsScreenState extends State<StatsScreen> {
         final workoutMap = {for (var w in provider.workouts) w.id: w};
 
         for (final log in monthlyLogs) {
-          final validSets = log.sets.where((s) => s.reps > 0).length;
+          final validSets = log.validSetCount;
           totalSets += validSets;
           trainingDays.add(log.date.day);
 
@@ -239,6 +240,23 @@ class _StatsScreenState extends State<StatsScreen> {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
+            Row(
+              children: ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day) {
+                return Expanded(
+                  child: Center(
+                    child: Text(
+                      day,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 8),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),

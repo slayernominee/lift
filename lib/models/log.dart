@@ -12,6 +12,9 @@ class ExerciseSet with EquatableMixin {
     this.completed = false,
   });
 
+  /// Returns true if the set has data or is explicitly marked as completed.
+  bool get isValid => reps > 0 || weight > 0 || completed;
+
   @override
   List<Object?> get props => [weight, reps, completed];
 }
@@ -46,4 +49,7 @@ class ExerciseLog with EquatableMixin {
 
   @override
   List<Object?> get props => [id, exerciseId, workoutId, date, sets];
+
+  /// Returns the number of valid sets in this log.
+  int get validSetCount => sets.where((s) => s.isValid).length;
 }

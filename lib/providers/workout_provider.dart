@@ -486,7 +486,7 @@ class WorkoutProvider with ChangeNotifier {
       final log = getLog(exercise.exerciseId, workoutId, date);
       if (log == null) return false;
 
-      final completedSets = log.sets.where((s) => s.reps > 0).length;
+      final completedSets = log.sets.where((s) => s.isValid).length;
       if (completedSets < exercise.targetSets) return false;
     }
 
@@ -495,9 +495,7 @@ class WorkoutProvider with ChangeNotifier {
 
   Future<void> saveLog(ExerciseLog log) async {
     // Check if log has any valid sets
-    final hasValidSets = log.sets.any(
-      (s) => s.reps > 0 || s.weight > 0 || s.completed,
-    );
+    final hasValidSets = log.sets.any((s) => s.isValid);
 
     // Save to Memory
     final index = _logs.indexWhere((l) => l.id == log.id);
@@ -525,7 +523,7 @@ class WorkoutProvider with ChangeNotifier {
     final batch = db.batch();
     for (int i = 0; i < log.sets.length; i++) {
       final set = log.sets[i];
-      if (set.reps == 0 && set.weight == 0 && !set.completed) continue;
+      if (!set.isValid) continue;
 
       batch.insert('set_logs', {
         'log_id': log.id,

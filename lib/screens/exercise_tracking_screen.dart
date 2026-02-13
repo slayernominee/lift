@@ -848,7 +848,7 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
           widget.exercise.id,
           widget.workout.id,
         );
-        final points = logs.where((l) => l.sets.isNotEmpty).map((l) {
+        final points = logs.where((l) => l.validSetCount > 0).map((l) {
           int totalReps = l.sets.fold(0, (sum, s) => sum + s.reps);
           return ChartDataPoint(date: l.date, value: totalReps.toDouble());
         }).toList();

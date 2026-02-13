@@ -18,6 +18,7 @@ class ExercisesScreen extends StatefulWidget {
 class _ExercisesScreenState extends State<ExercisesScreen> {
   String _searchQuery = '';
   String? _selectedBodyPartFilter;
+  String? _selectedEquipmentFilter;
 
   // List data from JSON files
   List<String> get _allMuscles => context.read<WorkoutProvider>().muscles;
@@ -341,16 +342,47 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
       ),
       body: Consumer<WorkoutProvider>(
         builder: (context, provider, child) {
-          final availableBodyParts = provider.exercises
-              .expand((e) => e.bodyParts)
-              .toSet();
+          // Count exercises per body part for sorting
+          final bodyPartCounts = <String, int>{};
+          for (final ex in provider.exercises) {
+            for (final bp in ex.bodyParts) {
+              bodyPartCounts[bp] = (bodyPartCounts[bp] ?? 0) + 1;
+            }
+          }
+          final sortedBodyParts = bodyPartCounts.keys.toList()
+            ..sort((a, b) => bodyPartCounts[b]!.compareTo(bodyPartCounts[a]!));
+
+          // Count exercises per equipment for sorting
+          final equipmentCounts = <String, int>{};
+          for (final ex in provider.exercises) {
+            for (final eq in ex.equipment) {
+              equipmentCounts[eq] = (equipmentCounts[eq] ?? 0) + 1;
+            }
+          }
+          final sortedEquipment = equipmentCounts.keys.toList()
+            ..sort(
+              (a, b) => equipmentCounts[b]!.compareTo(equipmentCounts[a]!),
+            );
+
+          // Safety check: reset filters if they are no longer in the available options
+          if (_selectedBodyPartFilter != null &&
+              !sortedBodyParts.contains(_selectedBodyPartFilter)) {
+            _selectedBodyPartFilter = null;
+          }
+          if (_selectedEquipmentFilter != null &&
+              !sortedEquipment.contains(_selectedEquipmentFilter)) {
+            _selectedEquipmentFilter = null;
+          }
 
           final exercises = provider.exercises.where((e) {
-            final matchesFilter =
+            final matchesBodyPart =
                 _selectedBodyPartFilter == null ||
                 e.bodyParts.contains(_selectedBodyPartFilter);
+            final matchesEquipment =
+                _selectedEquipmentFilter == null ||
+                e.equipment.contains(_selectedEquipmentFilter);
 
-            if (!matchesFilter) return false;
+            if (!matchesBodyPart || !matchesEquipment) return false;
 
             return e.name.toLowerCase().contains(_searchQuery) ||
                 e.targetMuscles.any(
@@ -387,42 +419,86 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
 
           return Column(
             children: [
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
+              Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 8,
                 ),
                 child: Row(
                   children: [
-                    FilterChip(
-                      label: const Text('All'),
-                      selected: _selectedBodyPartFilter == null,
-                      onSelected: (selected) {
-                        setState(() {
-                          _selectedBodyPartFilter = null;
-                        });
-                      },
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedBodyPartFilter,
+                        decoration: InputDecoration(
+                          labelText: 'Body Part',
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        isExpanded: true,
+                        items: [
+                          const DropdownMenuItem<String>(
+                            value: null,
+                            child: Text('All'),
+                          ),
+                          ...sortedBodyParts.map((bp) {
+                            return DropdownMenuItem<String>(
+                              value: bp,
+                              child: Text(
+                                '$bp (${bodyPartCounts[bp]})',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          }),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedBodyPartFilter = value;
+                          });
+                        },
+                      ),
                     ),
-                    const SizedBox(width: 8),
-                    ...provider.bodyParts
-                        .where((bp) => availableBodyParts.contains(bp))
-                        .map((bodyPart) {
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: FilterChip(
-                              label: Text(bodyPart),
-                              selected: _selectedBodyPartFilter == bodyPart,
-                              onSelected: (selected) {
-                                setState(() {
-                                  _selectedBodyPartFilter = selected
-                                      ? bodyPart
-                                      : null;
-                                });
-                              },
-                            ),
-                          );
-                        }),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedEquipmentFilter,
+                        decoration: InputDecoration(
+                          labelText: 'Equipment',
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        isExpanded: true,
+                        items: [
+                          const DropdownMenuItem<String>(
+                            value: null,
+                            child: Text('All'),
+                          ),
+                          ...sortedEquipment.map((eq) {
+                            return DropdownMenuItem<String>(
+                              value: eq,
+                              child: Text(
+                                '$eq (${equipmentCounts[eq]})',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          }),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedEquipmentFilter = value;
+                          });
+                        },
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -431,7 +507,8 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                     ? Center(
                         child: Text(
                           _searchQuery.isEmpty &&
-                                  _selectedBodyPartFilter == null
+                                  _selectedBodyPartFilter == null &&
+                                  _selectedEquipmentFilter == null
                               ? 'No exercises found. Add some!'
                               : 'No exercises match your criteria.',
                         ),
