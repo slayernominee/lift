@@ -19,6 +19,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
   String _searchQuery = '';
   String? _selectedBodyPartFilter;
   String? _selectedEquipmentFilter;
+  String? _selectedMuscleFilter;
 
   // List data from JSON files
   List<String> get _allMuscles => context.read<WorkoutProvider>().muscles;
@@ -342,27 +343,95 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
       ),
       body: Consumer<WorkoutProvider>(
         builder: (context, provider, child) {
-          // Count exercises per body part for sorting
+          final allExercises = provider.exercises;
+
+          bool matchesFilters(
+            Exercise e, {
+            String? bodyPart,
+            String? equipment,
+            String? muscle,
+            String query = '',
+          }) {
+            if (bodyPart != null && !e.bodyParts.contains(bodyPart)) {
+              return false;
+            }
+            if (equipment != null && !e.equipment.contains(equipment)) {
+              return false;
+            }
+            if (muscle != null &&
+                !e.targetMuscles.contains(muscle) &&
+                !e.secondaryMuscles.contains(muscle)) {
+              return false;
+            }
+
+            if (query.isNotEmpty) {
+              return e.name.toLowerCase().contains(query) ||
+                  e.targetMuscles.any((m) => m.toLowerCase().contains(query)) ||
+                  e.equipment.any((eq) => eq.toLowerCase().contains(query)) ||
+                  e.bodyParts.any((bp) => bp.toLowerCase().contains(query)) ||
+                  e.secondaryMuscles.any(
+                    (sm) => sm.toLowerCase().contains(query),
+                  );
+            }
+            return true;
+          }
+
+          // Count exercises per body part (filtered by others)
           final bodyPartCounts = <String, int>{};
-          for (final ex in provider.exercises) {
-            for (final bp in ex.bodyParts) {
-              bodyPartCounts[bp] = (bodyPartCounts[bp] ?? 0) + 1;
+          for (final ex in allExercises) {
+            if (matchesFilters(
+              ex,
+              equipment: _selectedEquipmentFilter,
+              muscle: _selectedMuscleFilter,
+              query: _searchQuery,
+            )) {
+              for (final bp in ex.bodyParts) {
+                bodyPartCounts[bp] = (bodyPartCounts[bp] ?? 0) + 1;
+              }
             }
           }
           final sortedBodyParts = bodyPartCounts.keys.toList()
             ..sort((a, b) => bodyPartCounts[b]!.compareTo(bodyPartCounts[a]!));
 
-          // Count exercises per equipment for sorting
+          // Count exercises per equipment (filtered by others)
           final equipmentCounts = <String, int>{};
-          for (final ex in provider.exercises) {
-            for (final eq in ex.equipment) {
-              equipmentCounts[eq] = (equipmentCounts[eq] ?? 0) + 1;
+          for (final ex in allExercises) {
+            if (matchesFilters(
+              ex,
+              bodyPart: _selectedBodyPartFilter,
+              muscle: _selectedMuscleFilter,
+              query: _searchQuery,
+            )) {
+              for (final eq in ex.equipment) {
+                equipmentCounts[eq] = (equipmentCounts[eq] ?? 0) + 1;
+              }
             }
           }
           final sortedEquipment = equipmentCounts.keys.toList()
             ..sort(
               (a, b) => equipmentCounts[b]!.compareTo(equipmentCounts[a]!),
             );
+
+          // Count exercises per muscle (filtered by others)
+          final muscleCounts = <String, int>{};
+          for (final ex in allExercises) {
+            if (matchesFilters(
+              ex,
+              bodyPart: _selectedBodyPartFilter,
+              equipment: _selectedEquipmentFilter,
+              query: _searchQuery,
+            )) {
+              final uniqueMuscles = {
+                ...ex.targetMuscles,
+                ...ex.secondaryMuscles,
+              };
+              for (final m in uniqueMuscles) {
+                muscleCounts[m] = (muscleCounts[m] ?? 0) + 1;
+              }
+            }
+          }
+          final sortedMuscles = muscleCounts.keys.toList()
+            ..sort((a, b) => muscleCounts[b]!.compareTo(muscleCounts[a]!));
 
           // Safety check: reset filters if they are no longer in the available options
           if (_selectedBodyPartFilter != null &&
@@ -373,30 +442,19 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               !sortedEquipment.contains(_selectedEquipmentFilter)) {
             _selectedEquipmentFilter = null;
           }
+          if (_selectedMuscleFilter != null &&
+              !sortedMuscles.contains(_selectedMuscleFilter)) {
+            _selectedMuscleFilter = null;
+          }
 
-          final exercises = provider.exercises.where((e) {
-            final matchesBodyPart =
-                _selectedBodyPartFilter == null ||
-                e.bodyParts.contains(_selectedBodyPartFilter);
-            final matchesEquipment =
-                _selectedEquipmentFilter == null ||
-                e.equipment.contains(_selectedEquipmentFilter);
-
-            if (!matchesBodyPart || !matchesEquipment) return false;
-
-            return e.name.toLowerCase().contains(_searchQuery) ||
-                e.targetMuscles.any(
-                  (m) => m.toLowerCase().contains(_searchQuery),
-                ) ||
-                e.equipment.any(
-                  (eq) => eq.toLowerCase().contains(_searchQuery),
-                ) ||
-                e.bodyParts.any(
-                  (bp) => bp.toLowerCase().contains(_searchQuery),
-                ) ||
-                e.secondaryMuscles.any(
-                  (sm) => sm.toLowerCase().contains(_searchQuery),
-                );
+          final exercises = allExercises.where((e) {
+            return matchesFilters(
+              e,
+              bodyPart: _selectedBodyPartFilter,
+              equipment: _selectedEquipmentFilter,
+              muscle: _selectedMuscleFilter,
+              query: _searchQuery,
+            );
           }).toList();
 
           // Group exercises by primary target muscle
@@ -424,80 +482,119 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                   horizontal: 16,
                   vertical: 8,
                 ),
-                child: Row(
+                child: Column(
                   children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedBodyPartFilter,
-                        decoration: InputDecoration(
-                          labelText: 'Body Part',
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: _selectedBodyPartFilter,
+                            decoration: InputDecoration(
+                              labelText: 'Body Part',
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            isExpanded: true,
+                            items: [
+                              const DropdownMenuItem<String>(
+                                value: null,
+                                child: Text('All'),
+                              ),
+                              ...sortedBodyParts.map((bp) {
+                                return DropdownMenuItem<String>(
+                                  value: bp,
+                                  child: Text(
+                                    '$bp (${bodyPartCounts[bp]})',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                );
+                              }),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedBodyPartFilter = value;
+                              });
+                            },
                           ),
                         ),
-                        isExpanded: true,
-                        items: [
-                          const DropdownMenuItem<String>(
-                            value: null,
-                            child: Text('All'),
-                          ),
-                          ...sortedBodyParts.map((bp) {
-                            return DropdownMenuItem<String>(
-                              value: bp,
-                              child: Text(
-                                '$bp (${bodyPartCounts[bp]})',
-                                overflow: TextOverflow.ellipsis,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: _selectedEquipmentFilter,
+                            decoration: InputDecoration(
+                              labelText: 'Equipment',
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
                               ),
-                            );
-                          }),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedBodyPartFilter = value;
-                          });
-                        },
-                      ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            isExpanded: true,
+                            items: [
+                              const DropdownMenuItem<String>(
+                                value: null,
+                                child: Text('All'),
+                              ),
+                              ...sortedEquipment.map((eq) {
+                                return DropdownMenuItem<String>(
+                                  value: eq,
+                                  child: Text(
+                                    '$eq (${equipmentCounts[eq]})',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                );
+                              }),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedEquipmentFilter = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedEquipmentFilter,
-                        decoration: InputDecoration(
-                          labelText: 'Equipment',
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: _selectedMuscleFilter,
+                      decoration: InputDecoration(
+                        labelText: 'Muscle',
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
                         ),
-                        isExpanded: true,
-                        items: [
-                          const DropdownMenuItem<String>(
-                            value: null,
-                            child: Text('All'),
-                          ),
-                          ...sortedEquipment.map((eq) {
-                            return DropdownMenuItem<String>(
-                              value: eq,
-                              child: Text(
-                                '$eq (${equipmentCounts[eq]})',
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            );
-                          }),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedEquipmentFilter = value;
-                          });
-                        },
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
+                      isExpanded: true,
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('All'),
+                        ),
+                        ...sortedMuscles.map((m) {
+                          return DropdownMenuItem<String>(
+                            value: m,
+                            child: Text(
+                              '$m (${muscleCounts[m]})',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          );
+                        }),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedMuscleFilter = value;
+                        });
+                      },
                     ),
                   ],
                 ),
@@ -508,7 +605,8 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                         child: Text(
                           _searchQuery.isEmpty &&
                                   _selectedBodyPartFilter == null &&
-                                  _selectedEquipmentFilter == null
+                                  _selectedEquipmentFilter == null &&
+                                  _selectedMuscleFilter == null
                               ? 'No exercises found. Add some!'
                               : 'No exercises match your criteria.',
                         ),
