@@ -848,15 +848,29 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
           widget.exercise.id,
           widget.workout.id,
         );
-        final points = logs.where((l) => l.validSetCount > 0).map((l) {
+
+        final validLogs = logs.where((l) => l.validSetCount > 0).toList();
+
+        final repsPoints = validLogs.map((l) {
           int totalReps = l.sets.fold(0, (sum, s) => sum + s.reps);
           return ChartDataPoint(date: l.date, value: totalReps.toDouble());
         }).toList();
 
+        final volumePoints = validLogs.map((l) {
+          double totalVolume = l.sets.fold(
+            0.0,
+            (sum, s) => sum + (s.weight * s.reps),
+          );
+          return ChartDataPoint(date: l.date, value: totalVolume);
+        }).toList();
+
         return TimelineChart(
-          points: points,
-          label: 'Repetition History',
-          subLabel: 'Total reps per session',
+          repsPoints: repsPoints,
+          volumePoints: volumePoints,
+          repsLabel: 'History',
+          repsSubLabel: 'Reps per session',
+          volumeLabel: 'History',
+          volumeSubLabel: 'Volume per session',
         );
       },
     );

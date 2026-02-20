@@ -10,16 +10,22 @@ class ChartDataPoint {
 }
 
 class TimelineChart extends StatefulWidget {
-  final List<ChartDataPoint> points;
-  final String label;
-  final String subLabel;
+  final List<ChartDataPoint> repsPoints;
+  final List<ChartDataPoint> volumePoints;
+  final String repsLabel;
+  final String repsSubLabel;
+  final String volumeLabel;
+  final String volumeSubLabel;
   final Color? color;
 
   const TimelineChart({
     super.key,
-    required this.points,
-    required this.label,
-    required this.subLabel,
+    required this.repsPoints,
+    required this.volumePoints,
+    required this.repsLabel,
+    required this.repsSubLabel,
+    required this.volumeLabel,
+    required this.volumeSubLabel,
     this.color,
   });
 
@@ -29,6 +35,7 @@ class TimelineChart extends StatefulWidget {
 
 class _TimelineChartState extends State<TimelineChart> {
   String _selectedRange = 'All';
+  String _selectedMetric = 'Reps';
   int _chartOffsetDays = 0;
 
   int _getRangeDays() {
@@ -44,6 +51,20 @@ class _TimelineChartState extends State<TimelineChart> {
     return '${DateFormat('MMM d').format(start)} - ${DateFormat('MMM d').format(endPoint)}';
   }
 
+  List<ChartDataPoint> get _currentPoints {
+    return _selectedMetric == 'Reps' ? widget.repsPoints : widget.volumePoints;
+  }
+
+  String get _currentLabel {
+    return _selectedMetric == 'Reps' ? widget.repsLabel : widget.volumeLabel;
+  }
+
+  String get _currentSubLabel {
+    return _selectedMetric == 'Reps'
+        ? widget.repsSubLabel
+        : widget.volumeSubLabel;
+  }
+
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
@@ -51,13 +72,18 @@ class _TimelineChartState extends State<TimelineChart> {
     final endPoint = today.subtract(Duration(days: _chartOffsetDays));
 
     DateTime? minDate;
-    if (_selectedRange == '1W') minDate = endPoint.subtract(const Duration(days: 7));
-    else if (_selectedRange == '1M') minDate = endPoint.subtract(const Duration(days: 30));
-    else if (_selectedRange == '3M') minDate = endPoint.subtract(const Duration(days: 90));
+    if (_selectedRange == '1W')
+      minDate = endPoint.subtract(const Duration(days: 7));
+    else if (_selectedRange == '1M')
+      minDate = endPoint.subtract(const Duration(days: 30));
+    else if (_selectedRange == '3M')
+      minDate = endPoint.subtract(const Duration(days: 90));
 
-    final filteredPoints = widget.points.where((p) {
+    final filteredPoints = _currentPoints.where((p) {
       final pDate = DateTime(p.date.year, p.date.month, p.date.day);
-      if (minDate != null && (pDate.isBefore(minDate!) || pDate.isAfter(endPoint))) return false;
+      if (minDate != null &&
+          (pDate.isBefore(minDate) || pDate.isAfter(endPoint)))
+        return false;
       return true;
     }).toList();
 
@@ -67,20 +93,33 @@ class _TimelineChartState extends State<TimelineChart> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _currentLabel,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    _currentSubLabel,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  widget.label,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  widget.subLabel,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
+                _buildMetricSwitcher(),
+                const SizedBox(width: 12),
+                _buildRangeSwitcher(),
               ],
             ),
-            _buildRangeSwitcher(),
           ],
         ),
         if (_selectedRange != 'All')
@@ -92,19 +131,26 @@ class _TimelineChartState extends State<TimelineChart> {
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   icon: const Icon(Icons.chevron_left, size: 20),
-                  onPressed: () => setState(() => _chartOffsetDays += _getRangeDays()),
+                  onPressed: () =>
+                      setState(() => _chartOffsetDays += _getRangeDays()),
                 ),
                 Text(
                   _getRangeText(endPoint),
-                  style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   icon: const Icon(Icons.chevron_right, size: 20),
-                  onPressed: _chartOffsetDays <= 0 ? null : () => setState(() {
-                    _chartOffsetDays -= _getRangeDays();
-                    if (_chartOffsetDays < 0) _chartOffsetDays = 0;
-                  }),
+                  onPressed: _chartOffsetDays <= 0
+                      ? null
+                      : () => setState(() {
+                          _chartOffsetDays -= _getRangeDays();
+                          if (_chartOffsetDays < 0) _chartOffsetDays = 0;
+                        }),
                 ),
               ],
             ),
@@ -115,11 +161,79 @@ class _TimelineChartState extends State<TimelineChart> {
     );
   }
 
+  Widget _buildMetricSwitcher() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildMetricButton(
+            label: 'Reps',
+            icon: Icons.format_list_numbered,
+            isSelected: _selectedMetric == 'Reps',
+            onTap: () => setState(() => _selectedMetric = 'Reps'),
+          ),
+          const SizedBox(width: 4),
+          _buildMetricButton(
+            label: 'Volume',
+            icon: Icons.fitness_center,
+            isSelected: _selectedMetric == 'Volume',
+            onTap: () => setState(() => _selectedMetric = 'Volume'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricButton({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isSelected ? Colors.white : Colors.grey,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildRangeSwitcher() {
     return Container(
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(8),
+        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -131,16 +245,18 @@ class _TimelineChartState extends State<TimelineChart> {
               _chartOffsetDays = 0;
             }),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 range,
                 style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
                   color: isSelected ? Colors.white : Colors.grey,
                 ),
               ),
@@ -151,8 +267,13 @@ class _TimelineChartState extends State<TimelineChart> {
     );
   }
 
-  Widget _buildChart(List<ChartDataPoint> filteredPoints, DateTime? minDate, DateTime endPoint, DateTime today) {
-    if (widget.points.isEmpty) {
+  Widget _buildChart(
+    List<ChartDataPoint> filteredPoints,
+    DateTime? minDate,
+    DateTime endPoint,
+    DateTime today,
+  ) {
+    if (widget.repsPoints.isEmpty && widget.volumePoints.isEmpty) {
       return Container(
         height: 200,
         width: double.infinity,
@@ -161,13 +282,23 @@ class _TimelineChartState extends State<TimelineChart> {
           borderRadius: BorderRadius.circular(12),
         ),
         child: const Center(
-          child: Text('No data recorded yet', style: TextStyle(color: Colors.grey)),
+          child: Text(
+            'No data recorded yet',
+            style: TextStyle(color: Colors.grey),
+          ),
         ),
       );
     }
 
-    final oldestPoint = widget.points.map((p) => p.date).reduce((a, b) => a.isBefore(b) ? a : b);
-    final oldestDate = DateTime(oldestPoint.year, oldestPoint.month, oldestPoint.day);
+    final allPoints = [...widget.repsPoints, ...widget.volumePoints];
+    final oldestPoint = allPoints
+        .map((p) => p.date)
+        .reduce((a, b) => a.isBefore(b) ? a : b);
+    final oldestDate = DateTime(
+      oldestPoint.year,
+      oldestPoint.month,
+      oldestPoint.day,
+    );
 
     DateTime chartStart;
     if (_selectedRange == 'All') {
@@ -237,7 +368,10 @@ class _TimelineChartState extends State<TimelineChart> {
                       reservedSize: 40,
                       getTitlesWidget: (value, meta) => Text(
                         value.toStringAsFixed(0),
-                        style: const TextStyle(color: Colors.grey, fontSize: 10),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 10,
+                        ),
                       ),
                     ),
                   ),
@@ -250,22 +384,33 @@ class _TimelineChartState extends State<TimelineChart> {
                           (value * msPerDay + firstTime).toInt(),
                         );
                         bool showLabel = true;
-                        if (_selectedRange == '1M') showLabel = value % 5 == 0;
-                        else if (_selectedRange == '3M') showLabel = value % 10 == 0;
-                        else if (_selectedRange == 'All') showLabel = value % 30 == 0;
-                        if (!showLabel && value != maxX) return const SizedBox();
+                        if (_selectedRange == '1M')
+                          showLabel = value % 5 == 0;
+                        else if (_selectedRange == '3M')
+                          showLabel = value % 10 == 0;
+                        else if (_selectedRange == 'All')
+                          showLabel = value % 30 == 0;
+                        if (!showLabel && value != maxX)
+                          return const SizedBox();
                         return Padding(
                           padding: const EdgeInsets.only(top: 8.0),
                           child: Text(
                             DateFormat('MM/dd').format(date),
-                            style: const TextStyle(color: Colors.grey, fontSize: 8),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 8,
+                            ),
                           ),
                         );
                       },
                     ),
                   ),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                 ),
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
@@ -277,12 +422,15 @@ class _TimelineChartState extends State<TimelineChart> {
                     isStrokeCapRound: true,
                     dotData: FlDotData(
                       show: true,
-                      getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                        radius: 4,
-                        color: themeColor,
-                        strokeWidth: 2,
-                        strokeColor: Theme.of(context).scaffoldBackgroundColor,
-                      ),
+                      getDotPainter: (spot, percent, barData, index) =>
+                          FlDotCirclePainter(
+                            radius: 4,
+                            color: themeColor,
+                            strokeWidth: 2,
+                            strokeColor: Theme.of(
+                              context,
+                            ).scaffoldBackgroundColor,
+                          ),
                     ),
                     belowBarData: BarAreaData(
                       show: true,

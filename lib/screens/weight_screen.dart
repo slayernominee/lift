@@ -219,9 +219,12 @@ class WeightScreen extends StatelessWidget {
         .toList();
 
     return TimelineChart(
-      points: points,
-      label: 'Weight Progress',
-      subLabel: 'Body weight over time (kg)',
+      repsPoints: points,
+      volumePoints: points,
+      repsLabel: 'Weight',
+      repsSubLabel: 'Body weight (kg)',
+      volumeLabel: 'Weight',
+      volumeSubLabel: 'Body weight (kg)',
       color: Colors.tealAccent,
     );
   }
