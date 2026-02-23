@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lift/widgets/exercise_timer.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
+import 'package:lift/widgets/exercise_timer.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:lift/models/exercise.dart';
@@ -13,12 +14,16 @@ class ExerciseTrackingScreen extends StatefulWidget {
   final Workout workout;
   final WorkoutExercise workoutExercise;
   final Exercise exercise;
+  final VoidCallback? onOverscrollNext;
+  final VoidCallback? onOverscrollPrevious;
 
   const ExerciseTrackingScreen({
     super.key,
     required this.workout,
     required this.workoutExercise,
     required this.exercise,
+    this.onOverscrollNext,
+    this.onOverscrollPrevious,
   });
 
   @override
@@ -30,6 +35,8 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
   ExerciseLog? _currentLog;
   ExerciseLog? _lastLog;
   bool _showDetails = false;
+  final ValueNotifier<double> _overscrollNotifier = ValueNotifier(0.0);
+  bool _hapticTriggered = false;
   late TextEditingController _notesController;
 
   @override
@@ -136,22 +143,190 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
         children: [
           _buildDateSwitcher(),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
+            child: Stack(
               children: [
-                _buildExerciseDetails(),
-                _buildSetsHeader(),
-                const SizedBox(height: 8),
-                if (_currentLog != null) ...[
-                  ..._currentLog!.sets.asMap().entries.map((entry) {
-                    return _buildSetRow(entry.key, entry.value);
-                  }),
-                  const SizedBox(height: 16),
-                  _buildAddSetButton(),
-                ],
-                const SizedBox(height: 40),
-                _buildHistoryChart(),
-                const SizedBox(height: 40),
+                ValueListenableBuilder<double>(
+                  valueListenable: _overscrollNotifier,
+                  builder: (context, overscroll, child) {
+                    const threshold = 120.0;
+                    final progress = (overscroll.abs() / threshold).clamp(
+                      0.0,
+                      1.0,
+                    );
+                    final isOverThreshold = progress >= 1.0;
+
+                    if (!isOverThreshold && _hapticTriggered) {
+                      _hapticTriggered = false;
+                    } else if (isOverThreshold && !_hapticTriggered) {
+                      _hapticTriggered = true;
+                      HapticFeedback.mediumImpact();
+                    }
+
+                    return Stack(
+                      children: [
+                        if (widget.onOverscrollPrevious != null)
+                          Positioned(
+                            top: 20,
+                            left: 0,
+                            right: 0,
+                            child: Opacity(
+                              opacity: overscroll < 0 ? progress : 0.0,
+                              child: Center(
+                                child: Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).cardColor,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 8,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      CircularProgressIndicator(
+                                        value: progress,
+                                        strokeWidth: 3,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              isOverThreshold
+                                                  ? Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary
+                                                  : Colors.grey,
+                                            ),
+                                      ),
+                                      Icon(
+                                        Icons.keyboard_arrow_up,
+                                        color: isOverThreshold
+                                            ? Theme.of(
+                                                context,
+                                              ).colorScheme.primary
+                                            : Colors.grey,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (widget.onOverscrollNext != null)
+                          Positioned(
+                            bottom: 20,
+                            left: 0,
+                            right: 0,
+                            child: Opacity(
+                              opacity: overscroll > 0 ? progress : 0.0,
+                              child: Center(
+                                child: Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).cardColor,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 8,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      CircularProgressIndicator(
+                                        value: progress,
+                                        strokeWidth: 3,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              isOverThreshold
+                                                  ? Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary
+                                                  : Colors.grey,
+                                            ),
+                                      ),
+                                      Icon(
+                                        Icons.keyboard_arrow_down,
+                                        color: isOverThreshold
+                                            ? Theme.of(
+                                                context,
+                                              ).colorScheme.primary
+                                            : Colors.grey,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+                NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    if (notification is ScrollUpdateNotification) {
+                      final metrics = notification.metrics;
+                      const threshold = 120.0;
+
+                      // Calculate overscroll for UI feedback
+                      double newOverscroll = 0;
+                      if (metrics.pixels < metrics.minScrollExtent) {
+                        newOverscroll =
+                            metrics.pixels - metrics.minScrollExtent;
+                      } else if (metrics.pixels > metrics.maxScrollExtent) {
+                        newOverscroll =
+                            metrics.pixels - metrics.maxScrollExtent;
+                      }
+
+                      if (notification.dragDetails != null) {
+                        if ((newOverscroll - _overscrollNotifier.value).abs() >
+                            1) {
+                          _overscrollNotifier.value = newOverscroll;
+                        }
+                      } else {
+                        // User released the drag (ballistic scroll)
+                        if (widget.onOverscrollPrevious != null &&
+                            newOverscroll < -threshold) {
+                          widget.onOverscrollPrevious!();
+                        } else if (widget.onOverscrollNext != null &&
+                            newOverscroll > threshold) {
+                          widget.onOverscrollNext!();
+                        }
+                      }
+                    } else if (notification is ScrollEndNotification) {
+                      _overscrollNotifier.value = 0;
+                      _hapticTriggered = false;
+                    }
+                    return false;
+                  },
+                  child: ListView(
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      _buildExerciseDetails(),
+                      _buildSetsHeader(),
+                      const SizedBox(height: 8),
+                      if (_currentLog != null) ...[
+                        ..._currentLog!.sets.asMap().entries.map((entry) {
+                          return _buildSetRow(entry.key, entry.value);
+                        }),
+                        const SizedBox(height: 16),
+                        _buildAddSetButton(),
+                      ],
+                      const SizedBox(height: 40),
+                      _buildHistoryChart(),
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

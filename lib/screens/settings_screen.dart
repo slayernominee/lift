@@ -341,7 +341,7 @@ class SettingsScreen extends StatelessWidget {
             ),
             const Center(
               child: Text(
-                'Version 1.7.0',
+                'Version 1.8.0',
                 style: TextStyle(color: Colors.grey),
               ),
             ),
@@ -364,7 +364,7 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.favorite, size: 20, color: Colors.red[400]),
+                        Icon(Icons.favorite, size: 20, color: Colors.white),
                         const SizedBox(width: 8),
                         const Text(
                           'Credits',
@@ -377,12 +377,12 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      'Exercise data from a fork of ExerciseDB by ASCENDAPI.',
+                      'Exercise data from a fork of ExerciseDB by ASCENDAPI (AGPL-3.0 License).',
                       style: TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Special thanks to ASCENDAPI for allowing us to use their exercise database in this offline-focused app.',
+                      'Many thanks to ASCENDAPI for allowing us to use their exercise database in this offline-focused app.',
                       style: TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                     const SizedBox(height: 12),
@@ -440,7 +440,7 @@ class SettingsScreen extends StatelessWidget {
                 onTap: () => showLicensePage(
                   context: context,
                   applicationName: 'Lift',
-                  applicationVersion: '1.4.0',
+                  applicationVersion: '1.8.0',
                 ),
               ),
             ),

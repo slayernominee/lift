@@ -4,8 +4,8 @@ import 'package:uuid/uuid.dart';
 import 'package:lift/models/workout.dart';
 import 'package:lift/models/exercise.dart';
 import 'package:lift/providers/workout_provider.dart';
-import 'package:lift/screens/exercise_tracking_screen.dart';
 import 'package:lift/screens/exercises_screen.dart';
+import 'package:lift/screens/exercise_pager.dart';
 
 class WorkoutDetailScreen extends StatefulWidget {
   final Workout workout;
@@ -481,11 +481,8 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ExerciseTrackingScreen(
-                  workout: widget.workout,
-                  workoutExercise: workoutExercise,
-                  exercise: exercise!,
-                ),
+                builder: (context) =>
+                    ExercisePager(workout: widget.workout, initialIndex: index),
               ),
             );
           },
