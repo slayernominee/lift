@@ -367,7 +367,7 @@ class SettingsScreen extends StatelessWidget {
                         Icon(Icons.favorite, size: 20, color: Colors.white),
                         const SizedBox(width: 8),
                         const Text(
-                          'Credits',
+                          'Exercise DB',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -380,28 +380,30 @@ class SettingsScreen extends StatelessWidget {
                       'Exercise data from a fork of ExerciseDB by ASCENDAPI (AGPL-3.0 License).',
                       style: TextStyle(fontSize: 14),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Many thanks to ASCENDAPI for allowing us to use their exercise database in this offline-focused app.',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: () => _launchURL(
+                        'https://github.com/ExerciseDB/exercisedb-api',
+                      ),
+                      child: const Text(
+                        'Visit AscendAPI\'s new project (made it to an api and removed the original repo)',
+                        style: TextStyle(fontSize: 14, color: Colors.blue),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     InkWell(
-                      onTap: () => _launchURL('https://www.ascendapi.com/'),
+                      onTap: () => _launchURL(
+                        'https://github.com/obaloluwaobi/exercisedb',
+                      ),
                       child: const Text(
-                        'Visit ASCENDAPI',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.blue,
-                          decoration: TextDecoration.underline,
-                        ),
+                        'Visit Fork (the git tree got for some reason destroyed there etc...)',
+                        style: TextStyle(fontSize: 14, color: Colors.blue),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-
             const SizedBox(height: 12),
 
             // Source Code Card

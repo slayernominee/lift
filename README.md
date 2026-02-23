@@ -6,7 +6,7 @@
   </a>
 </p>
 
-**Lift** is a modern, high-performance fitness tracker built with Flutter. It's designed for lifters who want a clean, distraction-free interface to manage their workouts, track their strength progress, and monitor body weight trends.
+**Lift** is a modern, high-performance fitness tracker built with Flutter. It's designed for lifters who want a clean, distraction-free interface to manage their workouts, track their strength progress, and monitor body weight trends. (Attention: Vibe Coded)
 
 ## Showcase
 
