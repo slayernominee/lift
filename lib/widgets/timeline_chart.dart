@@ -115,8 +115,10 @@ class _TimelineChartState extends State<TimelineChart> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildMetricSwitcher(),
-                const SizedBox(width: 12),
+                if (widget.repsLabel != widget.volumeLabel) ...[
+                  _buildMetricSwitcher(),
+                  const SizedBox(width: 12),
+                ],
                 _buildRangeSwitcher(),
               ],
             ),

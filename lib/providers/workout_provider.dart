@@ -28,6 +28,7 @@ class WorkoutProvider with ChangeNotifier {
     _initDefaults();
     _initDatabase();
     _loadMetadata();
+    _checkActiveTimer();
   }
 
   Future<void> _loadMetadata() async {
@@ -156,30 +157,65 @@ class WorkoutProvider with ChangeNotifier {
   int get secondsRemaining => _secondsRemaining;
   bool get isTimerActive => _isTimerActive;
 
-  void startTimer() {
-    _timer?.cancel();
-    _secondsRemaining = timerDuration;
-    _isTimerActive = true;
-    notifyListeners();
+  void _checkActiveTimer() {
+    final settingsBox = Hive.box<dynamic>('settings');
+    final timerEndTimeMillis = settingsBox.get('timer_end_time');
 
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_secondsRemaining > 0) {
-        _secondsRemaining--;
-        notifyListeners();
+    if (timerEndTimeMillis != null) {
+      final endTime = DateTime.fromMillisecondsSinceEpoch(timerEndTimeMillis);
+      if (endTime.isAfter(DateTime.now())) {
+        _isTimerActive = true;
+        _startTicker();
       } else {
-        stopTimer();
-        HapticFeedback.heavyImpact();
-        // Vibrate again to be noticeable
-        Future.delayed(const Duration(milliseconds: 500), () {
-          HapticFeedback.heavyImpact();
-        });
+        settingsBox.delete('timer_end_time');
       }
-    });
+    }
+  }
+
+  void startTimer() {
+    final endTime = DateTime.now().add(Duration(seconds: timerDuration));
+    Hive.box<dynamic>(
+      'settings',
+    ).put('timer_end_time', endTime.millisecondsSinceEpoch);
+    _isTimerActive = true;
+    _startTicker();
+  }
+
+  void _startTicker() {
+    _timer?.cancel();
+    _updateTimer(); // Initial update
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _updateTimer());
+  }
+
+  void _updateTimer() {
+    final settingsBox = Hive.box<dynamic>('settings');
+    final timerEndTimeMillis = settingsBox.get('timer_end_time');
+
+    if (timerEndTimeMillis == null) {
+      stopTimer();
+      return;
+    }
+
+    final endTime = DateTime.fromMillisecondsSinceEpoch(timerEndTimeMillis);
+    final now = DateTime.now();
+
+    if (now.isBefore(endTime)) {
+      _secondsRemaining = endTime.difference(now).inSeconds;
+      notifyListeners();
+    } else {
+      stopTimer();
+      HapticFeedback.heavyImpact();
+      Future.delayed(const Duration(milliseconds: 500), () {
+        HapticFeedback.heavyImpact();
+      });
+    }
   }
 
   void stopTimer() {
     _timer?.cancel();
     _isTimerActive = false;
+    _secondsRemaining = 0;
+    Hive.box<dynamic>('settings').delete('timer_end_time');
     notifyListeners();
   }
 
