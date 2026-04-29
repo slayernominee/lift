@@ -7,6 +7,7 @@ import 'package:lift/models/workout.dart';
 import 'package:lift/models/weight.dart';
 import 'package:lift/providers/workout_provider.dart';
 import 'package:lift/screens/home_screen.dart';
+import 'package:lift/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +29,10 @@ void main() async {
   await Hive.openBox<Workout>('workouts');
   await Hive.openBox<WeightEntry>('weights');
   await Hive.openBox<dynamic>('settings');
+
+  // Initialize notifications (rest timer background alerts)
+  await NotificationService.instance.init();
+
   runApp(
     MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => WorkoutProvider())],

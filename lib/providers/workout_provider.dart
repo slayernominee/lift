@@ -12,6 +12,7 @@ import 'package:lift/models/weight.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart';
 import 'package:lift/database/database_helper.dart';
+import 'package:lift/services/notification_service.dart';
 
 class WorkoutProvider with ChangeNotifier {
   final Box<Exercise> _exerciseBox = Hive.box<Exercise>('exercises');
@@ -166,8 +167,12 @@ class WorkoutProvider with ChangeNotifier {
       if (endTime.isAfter(DateTime.now())) {
         _isTimerActive = true;
         _startTicker();
+        // Re-schedule notification in case it was cancelled (e.g. app restart)
+        final remaining = endTime.difference(DateTime.now());
+        NotificationService.instance.scheduleRestTimerNotification(remaining);
       } else {
         settingsBox.delete('timer_end_time');
+        NotificationService.instance.cancelRestTimerNotification();
       }
     }
   }
@@ -179,6 +184,11 @@ class WorkoutProvider with ChangeNotifier {
     ).put('timer_end_time', endTime.millisecondsSinceEpoch);
     _isTimerActive = true;
     _startTicker();
+    // Schedule OS notification so the user is alerted even if the app is
+    // backgrounded when the timer expires.
+    NotificationService.instance.scheduleRestTimerNotification(
+      Duration(seconds: timerDuration),
+    );
   }
 
   void _startTicker() {
@@ -216,6 +226,9 @@ class WorkoutProvider with ChangeNotifier {
     _isTimerActive = false;
     _secondsRemaining = 0;
     Hive.box<dynamic>('settings').delete('timer_end_time');
+    // Cancel the scheduled notification – the timer expired in the foreground
+    // so the user already sees the in-app UI and haptic feedback.
+    NotificationService.instance.cancelRestTimerNotification();
     notifyListeners();
   }
 
