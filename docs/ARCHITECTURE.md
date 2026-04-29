@@ -2,7 +2,7 @@
 
 **Lift** — Modern, offline-first fitness tracker built with Flutter.
 
-> **Version:** 1.8.1
+> **Version:** 1.9.0
 > **License:** AGPL-3.0
 
 ---
@@ -45,21 +45,21 @@ Lift is a privacy-first, 100% offline gym workout tracker. Users manage **workou
 
 ## Tech Stack
 
-| Concern              | Package / Technology          |
-|----------------------|-------------------------------|
-| Framework            | Flutter (SDK `^3.10.4`)       |
-| Language             | Dart (SDK `^3.10.4`)          |
-| State Management     | `provider` (`^6.0.5`)         |
-| Local Persistence    | `hive` + `hive_flutter` (`^2.2.3`) for entities, `sqflite` (`^2.4.2`) for set logs |
-| Charts               | `fl_chart` (`^0.63.0`)        |
-| UUID Generation      | `uuid` (`^4.2.1`)             |
-| Value Equality       | `equatable` (`^2.0.5`)        |
-| Date Formatting      | `intl` (`^0.18.1`)            |
-| File Picker          | `file_picker` (`^8.1.6`)      |
-| Icons                | `font_awesome_flutter` (`^10.6.0`), built-in Material Icons |
-| Calendar             | `table_calendar` (`^3.0.9`)   |
-| URL Launching        | `url_launcher` (`^6.2.1`)     |
-| Code Generation      | `build_runner`, `hive_generator` |
+| Concern           | Package / Technology                                                               |
+| ----------------- | ---------------------------------------------------------------------------------- |
+| Framework         | Flutter (SDK `^3.10.4`)                                                            |
+| Language          | Dart (SDK `^3.10.4`)                                                               |
+| State Management  | `provider` (`^6.0.5`)                                                              |
+| Local Persistence | `hive` + `hive_flutter` (`^2.2.3`) for entities, `sqflite` (`^2.4.2`) for set logs |
+| Charts            | `fl_chart` (`^0.63.0`)                                                             |
+| UUID Generation   | `uuid` (`^4.2.1`)                                                                  |
+| Value Equality    | `equatable` (`^2.0.5`)                                                             |
+| Date Formatting   | `intl` (`^0.18.1`)                                                                 |
+| File Picker       | `file_picker` (`^8.1.6`)                                                           |
+| Icons             | `font_awesome_flutter` (`^10.6.0`), built-in Material Icons                        |
+| Calendar          | `table_calendar` (`^3.0.9`)                                                        |
+| URL Launching     | `url_launcher` (`^6.2.1`)                                                          |
+| Code Generation   | `build_runner`, `hive_generator`                                                   |
 
 ---
 
@@ -148,18 +148,18 @@ There is **one** provider (`WorkoutProvider`) that serves as the single source o
 
 Stored in Hive box `exercises`. TypeId: `0`.
 
-| Field              | Type           | HiveField | Description                                      |
-|--------------------|----------------|-----------|--------------------------------------------------|
-| `id`               | `String`       | 0         | UUID, also matches asset filename                 |
-| `name`             | `String`       | 1         | Display name                                      |
-| `description`      | `String?`      | 2         | Optional description                              |
-| `targetMuscles`    | `List<String>` | 3         | Primary target muscle groups                      |
-| `equipment`        | `List<String>` | 4         | Required equipment                                |
-| `bodyParts`        | `List<String>` | 5         | Body part categories                              |
-| `secondaryMuscles` | `List<String>` | 6         | Secondary muscles worked                          |
-| `instructions`     | `List<String>` | 7         | Step-by-step instructions                         |
+| Field              | Type           | HiveField | Description                                                    |
+| ------------------ | -------------- | --------- | -------------------------------------------------------------- |
+| `id`               | `String`       | 0         | UUID, also matches asset filename                              |
+| `name`             | `String`       | 1         | Display name                                                   |
+| `description`      | `String?`      | 2         | Optional description                                           |
+| `targetMuscles`    | `List<String>` | 3         | Primary target muscle groups                                   |
+| `equipment`        | `List<String>` | 4         | Required equipment                                             |
+| `bodyParts`        | `List<String>` | 5         | Body part categories                                           |
+| `secondaryMuscles` | `List<String>` | 6         | Secondary muscles worked                                       |
+| `instructions`     | `List<String>` | 7         | Step-by-step instructions                                      |
 | `gifAsset`         | `String?`      | 8         | Path to GIF in assets (e.g. `assets/exercises/media/<id>.gif`) |
-| `notes`            | `String?`      | 9         | User-editable notes                               |
+| `notes`            | `String?`      | 9         | User-editable notes                                            |
 
 Key factory: `Exercise.create(...)` generates a new UUID. `Exercise.fromJson(...)` handles both internal keys (`id`) and external ExerciseDB keys (`exerciseId`). Includes `toJson()` for export.
 
@@ -167,21 +167,21 @@ Key factory: `Exercise.create(...)` generates a new UUID. `Exercise.fromJson(...
 
 Stored in Hive box `workouts`. TypeId: `1`.
 
-| Field        | Type                    | HiveField | Description                          |
-|--------------|-------------------------|-----------|--------------------------------------|
-| `id`         | `String`                | 0         | UUID                                 |
-| `name`       | `String`                | 1         | User-defined workout name            |
-| `exercises`  | `List<WorkoutExercise>` | 2         | Ordered list of exercise references  |
+| Field       | Type                    | HiveField | Description                         |
+| ----------- | ----------------------- | --------- | ----------------------------------- |
+| `id`        | `String`                | 0         | UUID                                |
+| `name`      | `String`                | 1         | User-defined workout name           |
+| `exercises` | `List<WorkoutExercise>` | 2         | Ordered list of exercise references |
 
 ### WorkoutExercise (`lib/models/workout.dart`)
 
 Embedded within `Workout`. TypeId: `2`.
 
-| Field         | Type     | HiveField | Description                                 |
-|---------------|----------|-----------|---------------------------------------------|
-| `id`          | `String` | 0         | UUID for this workout-exercise link          |
-| `exerciseId`  | `String` | 1         | Foreign key to `Exercise.id`                 |
-| `targetSets`  | `int`    | 2         | Goal number of sets (default: 3)             |
+| Field        | Type     | HiveField | Description                         |
+| ------------ | -------- | --------- | ----------------------------------- |
+| `id`         | `String` | 0         | UUID for this workout-exercise link |
+| `exerciseId` | `String` | 1         | Foreign key to `Exercise.id`        |
+| `targetSets` | `int`    | 2         | Goal number of sets (default: 3)    |
 
 `WorkoutExercise.create(exerciseId:)` factory for convenience.
 
@@ -189,23 +189,23 @@ Embedded within `Workout`. TypeId: `2`.
 
 **Not persisted in Hive.** Stored in SQLite via `DatabaseHelper`. Kept in-memory as a list on `WorkoutProvider._logs`.
 
-| Field         | Type                | Description                                    |
-|---------------|---------------------|------------------------------------------------|
-| `id`          | `String`            | UUID                                           |
-| `exerciseId`  | `String`            | Foreign key to `Exercise.id`                   |
-| `workoutId`   | `String`            | Foreign key to `Workout.id`                    |
-| `date`        | `DateTime`          | Timestamp for the log entry                    |
-| `sets`        | `List<ExerciseSet>` | Actual sets performed                          |
+| Field        | Type                | Description                  |
+| ------------ | ------------------- | ---------------------------- |
+| `id`         | `String`            | UUID                         |
+| `exerciseId` | `String`            | Foreign key to `Exercise.id` |
+| `workoutId`  | `String`            | Foreign key to `Workout.id`  |
+| `date`       | `DateTime`          | Timestamp for the log entry  |
+| `sets`       | `List<ExerciseSet>` | Actual sets performed        |
 
 ### ExerciseSet (`lib/models/log.dart`)
 
 Embedded within `ExerciseLog`.
 
-| Field        | Type      | Default | Description                          |
-|--------------|-----------|---------|--------------------------------------|
-| `weight`     | `double`  | —       | Weight used (kg)                     |
-| `reps`       | `int`     | —       | Repetitions completed                |
-| `completed`  | `bool`    | `false` | Explicit completion flag             |
+| Field       | Type     | Default | Description              |
+| ----------- | -------- | ------- | ------------------------ |
+| `weight`    | `double` | —       | Weight used (kg)         |
+| `reps`      | `int`    | —       | Repetitions completed    |
+| `completed` | `bool`   | `false` | Explicit completion flag |
 
 `isValid` getter: `true` when `reps > 0 || weight > 0 || completed`.
 
@@ -213,12 +213,12 @@ Embedded within `ExerciseLog`.
 
 Stored in Hive box `weights`. TypeId: `5`.
 
-| Field    | Type        | HiveField | Description                  |
-|----------|-------------|-----------|------------------------------|
-| `id`     | `String`    | 0         | UUID                         |
-| `date`   | `DateTime`  | 1         | Date/time of measurement     |
-| `weight` | `double`    | 2         | Body weight in kg            |
-| `note`   | `String?`   | 3         | Optional note                |
+| Field    | Type       | HiveField | Description              |
+| -------- | ---------- | --------- | ------------------------ |
+| `id`     | `String`   | 0         | UUID                     |
+| `date`   | `DateTime` | 1         | Date/time of measurement |
+| `weight` | `double`   | 2         | Body weight in kg        |
+| `note`   | `String?`  | 3         | Optional note            |
 
 ---
 
@@ -258,43 +258,43 @@ WorkoutProvider
 
 #### Key Getters
 
-| Getter          | Returns                            | Notes                                    |
-|-----------------|------------------------------------|------------------------------------------|
-| `exercises`     | `List<Exercise>`                   | All values from Hive exercise box        |
-| `workouts`      | `List<Workout>`                    | Sorted by persisted `workout_order`      |
-| `logs`          | `List<ExerciseLog>`                | In-memory list from SQLite               |
-| `weightEntries` | `List<WeightEntry>`                | Sorted newest-first                      |
-| `muscles`       | `List<String>`                     | Muscle catalog for filters               |
-| `bodyParts`     | `List<String>`                     | Body part catalog for filters            |
-| `equipment`     | `List<String>`                     | Equipment catalog for filters            |
-| `timerDuration` | `int`                              | Default rest timer in seconds (120)      |
-| `secondsRemaining` | `int`                           | Countdown seconds for active timer       |
-| `isTimerActive` | `bool`                             | Whether rest timer is running            |
+| Getter             | Returns             | Notes                               |
+| ------------------ | ------------------- | ----------------------------------- |
+| `exercises`        | `List<Exercise>`    | All values from Hive exercise box   |
+| `workouts`         | `List<Workout>`     | Sorted by persisted `workout_order` |
+| `logs`             | `List<ExerciseLog>` | In-memory list from SQLite          |
+| `weightEntries`    | `List<WeightEntry>` | Sorted newest-first                 |
+| `muscles`          | `List<String>`      | Muscle catalog for filters          |
+| `bodyParts`        | `List<String>`      | Body part catalog for filters       |
+| `equipment`        | `List<String>`      | Equipment catalog for filters       |
+| `timerDuration`    | `int`               | Default rest timer in seconds (120) |
+| `secondsRemaining` | `int`               | Countdown seconds for active timer  |
+| `isTimerActive`    | `bool`              | Whether rest timer is running       |
 
 #### Key Methods
 
-| Method                        | Purpose                                                      |
-|-------------------------------|--------------------------------------------------------------|
-| `addExercise(Exercise)`       | Persist a new exercise to Hive                               |
-| `getExerciseById(String)`     | Lookup exercise by ID                                        |
-| `addWorkout(Workout)`         | Persist workout + append to order                            |
-| `updateWorkout(Workout)`      | Call `save()` on Hive object + notify                        |
-| `deleteWorkout(String)`       | Remove from Hive box + order list                            |
-| `reorderWorkoutExercise(...)` | Move exercise within workout's exercise list                 |
-| `saveLog(ExerciseLog)`        | Upsert log to in-memory list + SQLite batch insert           |
-| `getLog(exerciseId, workoutId, date)` | Find existing log for specific day                    |
-| `getLogsForExercise(...)`     | All logs for an exercise within a workout, newest-first      |
-| `getLastLog(...)`             | Most recent log (used for smart placeholders)                |
-| `isWorkoutCompleted(...)`     | Checks all workout exercises have valid sets >= targetSets   |
-| `addWeightEntry(...)`         | Persist weight entry                                         |
-| `deleteWeightEntry(String)`   | Remove weight entry                                          |
-| `startTimer()`                | Begin rest countdown, persist end time                       |
-| `stopTimer()`                 | Cancel timer, clear persisted end time                       |
-| `exportWorkouts()`            | Export all workouts + exercises to JSON file                  |
-| `importWorkouts()`            | Import from JSON, auto-create missing exercises              |
-| `exportWorkout(Workout)`      | Export single workout to JSON                                |
-| `exportLogs()`                | Export all logs to CSV                                       |
-| `resetAllData()`              | Clear all boxes + SQLite + re-init defaults                  |
+| Method                                | Purpose                                                    |
+| ------------------------------------- | ---------------------------------------------------------- |
+| `addExercise(Exercise)`               | Persist a new exercise to Hive                             |
+| `getExerciseById(String)`             | Lookup exercise by ID                                      |
+| `addWorkout(Workout)`                 | Persist workout + append to order                          |
+| `updateWorkout(Workout)`              | Call `save()` on Hive object + notify                      |
+| `deleteWorkout(String)`               | Remove from Hive box + order list                          |
+| `reorderWorkoutExercise(...)`         | Move exercise within workout's exercise list               |
+| `saveLog(ExerciseLog)`                | Upsert log to in-memory list + SQLite batch insert         |
+| `getLog(exerciseId, workoutId, date)` | Find existing log for specific day                         |
+| `getLogsForExercise(...)`             | All logs for an exercise within a workout, newest-first    |
+| `getLastLog(...)`                     | Most recent log (used for smart placeholders)              |
+| `isWorkoutCompleted(...)`             | Checks all workout exercises have valid sets >= targetSets |
+| `addWeightEntry(...)`                 | Persist weight entry                                       |
+| `deleteWeightEntry(String)`           | Remove weight entry                                        |
+| `startTimer()`                        | Begin rest countdown, persist end time                     |
+| `stopTimer()`                         | Cancel timer, clear persisted end time                     |
+| `exportWorkouts()`                    | Export all workouts + exercises to JSON file               |
+| `importWorkouts()`                    | Import from JSON, auto-create missing exercises            |
+| `exportWorkout(Workout)`              | Export single workout to JSON                              |
+| `exportLogs()`                        | Export all logs to CSV                                     |
+| `resetAllData()`                      | Clear all boxes + SQLite + re-init defaults                |
 
 ---
 
@@ -306,12 +306,12 @@ Lift uses a **dual-database** strategy:
 
 Used for entity storage where key-based access and code generation adapters are convenient.
 
-| Box         | Key Type   | Value Type     | Purpose                          |
-|-------------|------------|----------------|----------------------------------|
-| `exercises` | `String`   | `Exercise`     | Exercise definitions             |
-| `workouts`  | `String`   | `Workout`      | Workout configurations           |
-| `weights`   | `String`   | `WeightEntry`  | Body weight entries              |
-| `settings`  | `dynamic`  | `dynamic`      | App settings (order, timer, etc.) |
+| Box         | Key Type  | Value Type    | Purpose                           |
+| ----------- | --------- | ------------- | --------------------------------- |
+| `exercises` | `String`  | `Exercise`    | Exercise definitions              |
+| `workouts`  | `String`  | `Workout`     | Workout configurations            |
+| `weights`   | `String`  | `WeightEntry` | Body weight entries               |
+| `settings`  | `dynamic` | `dynamic`     | App settings (order, timer, etc.) |
 
 All Hive boxes are opened in `main.dart` before `runApp()`. Adapters are registered in order:
 
@@ -330,17 +330,17 @@ Database: `lift.db`, version `1`.
 
 **Table: `set_logs`**
 
-| Column          | Type     | Description                                   |
-|-----------------|----------|-----------------------------------------------|
-| `id`            | INTEGER  | Auto-increment PK                              |
-| `log_id`        | TEXT     | Groups sets into one ExerciseLog               |
-| `workout_uuid`  | TEXT     | FK to Workout                                  |
-| `exercise_uuid` | TEXT     | FK to Exercise                                 |
-| `timestamp`     | INTEGER  | Milliseconds since epoch                       |
-| `set_index`     | INTEGER  | Position of the set within the log             |
-| `reps`          | INTEGER  | Repetitions                                    |
-| `weight`        | REAL     | Weight in kg                                   |
-| `completed`     | INTEGER  | 0 or 1 boolean                                |
+| Column          | Type    | Description                        |
+| --------------- | ------- | ---------------------------------- |
+| `id`            | INTEGER | Auto-increment PK                  |
+| `log_id`        | TEXT    | Groups sets into one ExerciseLog   |
+| `workout_uuid`  | TEXT    | FK to Workout                      |
+| `exercise_uuid` | TEXT    | FK to Exercise                     |
+| `timestamp`     | INTEGER | Milliseconds since epoch           |
+| `set_index`     | INTEGER | Position of the set within the log |
+| `reps`          | INTEGER | Repetitions                        |
+| `weight`        | REAL    | Weight in kg                       |
+| `completed`     | INTEGER | 0 or 1 boolean                     |
 
 `DatabaseHelper` is a singleton (`DatabaseHelper.instance`) that lazily initializes the database.
 
@@ -354,13 +354,13 @@ Navigation is entirely manual — no named routes or routing packages. Screens u
 
 Bottom navigation bar with 5 tabs using `IndexedStack` (all screens stay in memory):
 
-| Index | Label      | Screen                  |
-|-------|------------|-------------------------|
-| 0     | Workouts   | `WorkoutsScreen`        |
-| 1     | Exercises  | `ExercisesScreen`       |
-| 2     | Stats      | `StatsScreen`           |
-| 3     | Weight     | `WeightScreen`          |
-| 4     | Settings   | `SettingsScreen`        |
+| Index | Label     | Screen            |
+| ----- | --------- | ----------------- |
+| 0     | Workouts  | `WorkoutsScreen`  |
+| 1     | Exercises | `ExercisesScreen` |
+| 2     | Stats     | `StatsScreen`     |
+| 3     | Weight    | `WeightScreen`    |
+| 4     | Settings  | `SettingsScreen`  |
 
 ### Navigation Map
 
@@ -381,6 +381,7 @@ HomeScreen
 ### Screen Details
 
 #### WorkoutsScreen
+
 - Lists all workouts with completion indicators (green checkmark if all exercises logged today).
 - Swipe-to-delete with confirmation dialog.
 - Reorder mode via toggle button in app bar.
@@ -388,6 +389,7 @@ HomeScreen
 - Tap workout → navigates to `WorkoutDetailScreen`.
 
 #### WorkoutDetailScreen
+
 - Displays all exercises in the workout with circular progress indicators showing completed/target sets.
 - **Reorder mode** — drag-and-drop to reorder exercises.
 - Tap the progress circle to edit target sets.
@@ -398,6 +400,7 @@ HomeScreen
 - `+` button adds exercises from `ExercisesScreen` (passed a `onSelect` callback).
 
 #### ExercisesScreen
+
 - Full exercise database browser with search bar and filter chips (body part, equipment, muscle).
 - Each exercise card shows name, target muscles, and description.
 - FAB to add custom exercises via a multi-field dialog (name, description, muscles, equipment, body parts, secondary muscles, instructions, notes).
@@ -405,12 +408,14 @@ HomeScreen
 - Can be opened in **selection mode** (`onSelect` callback) for adding exercises to workouts.
 
 #### ExercisePager
+
 - Wraps exercises in a vertical `PageView` with `NeverScrollableScrollPhysics`.
 - Navigation via explicit previous/next callbacks from `ExerciseTrackingScreen` overscroll detection.
 - Shows one `ExerciseTrackingScreen` at a time.
 - Black background for focused workout experience.
 
 #### ExerciseTrackingScreen
+
 - **The core logging screen** — full-screen UI for logging one exercise.
 - Date switcher at top (previous/next day with date picker).
 - Exercise name, description, target muscles.
@@ -423,6 +428,7 @@ HomeScreen
 - Notes field per exercise per workout.
 
 #### StatsScreen
+
 - Monthly statistics dashboard.
 - Month switcher (previous/next arrows + date picker).
 - Calendar heatmap showing training days.
@@ -430,12 +436,14 @@ HomeScreen
 - Each card shows top 3 breakdowns by workout/exercise name.
 
 #### WeightScreen
+
 - Weight chart at top using `TimelineChart`.
 - Chronological list of weight entries below.
 - Swipe-to-delete entries.
 - FAB to add new weight entry with date/time picker.
 
 #### SettingsScreen
+
 - **General**: Rest timer duration selector (30s–300s).
 - **Data Management**: Export all workouts, import workouts, export logs (CSV), reset app.
 - **About**: App logo, version, credits (ExerciseDB attribution), source code link, issue tracker, licenses.
@@ -445,12 +453,14 @@ HomeScreen
 ## Reusable Widgets
 
 ### ExerciseTimer (`lib/widgets/exercise_timer.dart`)
+
 - Consumes `WorkoutProvider` via `Consumer`.
 - When inactive: shows a timer icon button that calls `startTimer()`.
 - When active: shows a pill-shaped countdown (`MM:SS`), tap to `stopTimer()`.
 - Formatted with zero-padded minutes and seconds.
 
 ### TimelineChart (`lib/widgets/timeline_chart.dart`)
+
 - Configurable line chart built on `fl_chart`.
 - Accepts two data series: `repsPoints` and `volumePoints` (both `List<ChartDataPoint>`).
 - **Range switcher**: 1W, 1M, 3M, All — filters data and enables pagination arrows.
@@ -460,11 +470,13 @@ HomeScreen
 - Used in both `ExerciseTrackingScreen` (exercise history) and `WeightScreen` (weight trend).
 
 ### MultiSelectField / MultiSelectDialog (`lib/widgets/multi_select_widgets.dart`)
+
 - Chip-based field that opens a searchable multi-select dialog.
 - Used in exercise add/edit dialogs for selecting muscles, body parts, equipment.
 - Shows selected items as dismissible chips.
 
 ### InstructionsField (`lib/widgets/multi_select_widgets.dart`)
+
 - Multi-line text field that splits content by newlines into `List<String>`.
 - Used for exercise instructions in the add/edit exercise dialog.
 
@@ -540,11 +552,11 @@ See [docs/workout_export_import.md](workout_export_import.md) for the full featu
 
 ### Export Formats
 
-| Operation         | Format  | Content                                          |
-|-------------------|---------|--------------------------------------------------|
-| Export All        | JSON    | `{ version, exercises[], workouts[] }`           |
-| Export Single     | JSON    | `{ version, exercises[], workout }`              |
-| Export Logs       | CSV     | `workout_uuid, exercise_uuid, timestamp, set_index, reps, weight, completed` |
+| Operation     | Format | Content                                                                      |
+| ------------- | ------ | ---------------------------------------------------------------------------- |
+| Export All    | JSON   | `{ version, exercises[], workouts[] }`                                       |
+| Export Single | JSON   | `{ version, exercises[], workout }`                                          |
+| Export Logs   | CSV    | `workout_uuid, exercise_uuid, timestamp, set_index, reps, weight, completed` |
 
 ### Import Behavior
 
@@ -566,6 +578,7 @@ The rest timer persists across screen navigations and even app restarts:
 4. **Resume**: On provider construction, `_checkActiveTimer()` checks for a persisted `timer_end_time`. If it's in the future, the ticker resumes automatically.
 
 This design ensures the timer survives:
+
 - Navigating between exercises in the pager
 - Switching tabs
 - Closing and reopening the app (if the end time hasn't passed)
@@ -636,26 +649,34 @@ This was introduced in v1.4.0 due to a schema change that required a full data r
 ## Key Design Decisions
 
 ### Single Provider
+
 One `WorkoutProvider` manages all state. This avoids cross-provider coordination complexity for a small-to-medium app. If the app grows significantly, splitting into separate providers (e.g., `ExerciseProvider`, `LogProvider`, `WeightProvider`, `TimerProvider`) would be the natural refactoring path.
 
 ### Dual Persistence (Hive + SQLite)
+
 - **Hive** excels at key-value lookups for entities (exercises, workouts, weight entries, settings).
 - **SQLite** is better for the structured, queryable set log data (needed for stats aggregation, CSV export, and filtering by date/exercise/workout).
 
 ### In-Memory Log List
+
 `ExerciseLog` objects are loaded from SQLite into a Dart `List` at startup. This enables fast lookups and UI responsiveness. Writes go to both the in-memory list and SQLite. The trade-off is that log data must fit in device memory — reasonable for a personal fitness tracker.
 
 ### No Routing Package
+
 The app uses manual `Navigator.push` with `MaterialPageRoute`. This keeps the dependency list small and the navigation flow explicit. For a 5-tab app with shallow navigation depth, this is sufficient.
 
 ### UUID-Based IDs
+
 All entities use UUID v4 for primary keys. This allows safe import/export without ID collisions and enables offline creation without server coordination.
 
 ### IndexedStack for Tabs
+
 `HomeScreen` uses `IndexedStack` to keep all 5 tab screens alive. This preserves scroll position, search state, and form data when switching tabs, at the cost of higher memory usage.
 
 ### Asset-Bundled Exercise Data
+
 Exercises ship as JSON in the app bundle. This eliminates the need for a first-launch network download, keeping the app truly offline-first. The trade-off is a larger APK/AAB size due to exercise GIFs.
 
 ### Smart Placeholders
+
 When logging an exercise, the app looks up the most recent log for that exercise in that specific workout via `getLastLog()`. Weight and rep values from the previous session are pre-filled, reducing data entry during workouts.
