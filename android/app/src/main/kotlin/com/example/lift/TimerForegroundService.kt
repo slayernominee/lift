@@ -13,44 +13,26 @@ import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 
-/**
- * Foreground service that runs the rest-timer countdown entirely in the
- * native Android layer, independent of the Flutter / Dart isolate.
- *
- * Two notification channels:
- * - [CHANNEL_SILENT] – low importance, no sound.  Used for the running
- *   countdown ("Rest Timer – 1:30").
- * - [CHANNEL_ALERT]  – high importance, sound + vibration.  Used for the
- *   completion alert ("Rest Timer Complete") that stays in the shade until
- *   the user dismisses it.
- *
- * Lifecycle:
- *  1. Dart sends [ACTION_START] with the duration in seconds.
- *  2. Service enters foreground with a silent ongoing countdown notification.
- *  3. [CountDownTimer] ticks every second, silently updating the notification.
- *  4. On completion the notification is replaced with a persistent, audible
- *     alert on [CHANNEL_ALERT].  The foreground is detached so the
- *     notification survives service shutdown.
- *  5. Dart may send [ACTION_STOP] to cancel early (manual stop).
- */
 class TimerForegroundService : Service() {
 
     companion object {
         // ── Channels ──────────────────────────────────────────────────
-        /** Silent / low-importance channel used while the timer is running. */
         const val CHANNEL_SILENT = "lift_rest_timer_silent"
-        /** High-importance channel used for the completion alert. */
         const val CHANNEL_ALERT = "lift_rest_timer"
 
-        const val NOTIFICATION_ID = 10 // avoid clash with FLN's ID 0
+        // ── Notification IDs ──────────────────────────────────────────
+        const val NOTIFICATION_ID_RUNNING = 10
+        const val NOTIFICATION_ID_COMPLETE = 11
 
         // ── Intent actions ────────────────────────────────────────────
         const val ACTION_START = "com.slayernominee.lift.TIMER_START"
         const val ACTION_STOP = "com.slayernominee.lift.TIMER_STOP"
         const val EXTRA_DURATION_SECONDS = "duration_seconds"
 
-        /** Whether the service is currently running. */
         var isRunning: Boolean = false
+            private set
+
+        var timerCompleted: Boolean = false
             private set
     }
 
@@ -58,14 +40,6 @@ class TimerForegroundService : Service() {
 
     private var countDownTimer: CountDownTimer? = null
     private var wakeLock: PowerManager.WakeLock? = null
-
-    /**
-     * `true` once [onTimerComplete] has fired.  Guards [cleanup] so that a
-     * late-arriving [ACTION_STOP] from the Dart side (the Dart isolate
-     * expiry tick races with this native countdown) does not remove the
-     * completion notification that the user should see.
-     */
-    private var timerCompleted = false
 
     // ── Service lifecycle ────────────────────────────────────────────
 
@@ -99,7 +73,10 @@ class TimerForegroundService : Service() {
                 timerCompleted = false
                 isRunning = true
                 acquireWakeLock()
-                startForeground(NOTIFICATION_ID, buildRunningNotification(durationSeconds))
+                startForeground(
+                    NOTIFICATION_ID_RUNNING,
+                    buildRunningNotification(durationSeconds),
+                )
                 startCountdown(durationSeconds.toLong())
             }
 
@@ -110,8 +87,6 @@ class TimerForegroundService : Service() {
     }
 
     override fun onDestroy() {
-        // Only release resources – notification lifecycle is handled in
-        // onTimerComplete (detach) or cleanup (remove).
         countDownTimer?.cancel()
         countDownTimer = null
         isRunning = false
@@ -129,7 +104,10 @@ class TimerForegroundService : Service() {
             override fun onTick(millisUntilFinished: Long) {
                 val remaining = (millisUntilFinished / 1_000).toInt()
                 val nm = getSystemService(NotificationManager::class.java)
-                nm.notify(NOTIFICATION_ID, buildRunningNotification(remaining))
+                nm.notify(
+                    NOTIFICATION_ID_RUNNING,
+                    buildRunningNotification(remaining),
+                )
             }
 
             override fun onFinish() {
@@ -138,21 +116,22 @@ class TimerForegroundService : Service() {
         }.start()
     }
 
-    /**
-     * Called when the countdown reaches zero.  Replaces the silent running
-     * notification with a persistent, audible alert on [CHANNEL_ALERT].
-     */
     private fun onTimerComplete() {
         timerCompleted = true
         isRunning = false
         releaseWakeLock()
         countDownTimer = null
 
-        // Post the completion notification on the alert channel.
         val nm = getSystemService(NotificationManager::class.java)
-        nm.notify(NOTIFICATION_ID, buildCompleteNotification())
 
-        // Vibrate – 500 ms pulse so the user notices even on silent.
+        // Remove the silent running notification first.
+        stopForeground(STOP_FOREGROUND_REMOVE)
+
+        // Post the completion notification as a brand-new notification
+        // on the alert channel so it rings, vibrates and shows heads-up.
+        nm.notify(NOTIFICATION_ID_COMPLETE, buildCompleteNotification())
+
+        // Extra vibration pulse.
         val vibrator = getSystemService(Context.VIBRATOR_SERVICE)
                 as android.os.Vibrator
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -167,39 +146,26 @@ class TimerForegroundService : Service() {
             vibrator.vibrate(500)
         }
 
-        // Detach (not remove!) so the completion notification stays in the
-        // shade until the user swipes it away.
-        stopForeground(STOP_FOREGROUND_DETACH)
         stopSelf()
     }
 
     // ── Cleanup (manual stop) ────────────────────────────────────────
 
-    /**
-     * Called when the user manually stops the timer via the Dart side.
-     *
-     * If the native countdown already completed ([timerCompleted] is `true`),
-     * the completion notification is already visible and must **not** be
-     * removed – the user needs to see "Timer Complete".  We just stop the
-     * service.
-     *
-     * Otherwise the timer was still running; cancel everything and remove
-     * the notification.
-     */
     private fun cleanup() {
         if (timerCompleted) {
-            // Native countdown already finished – keep the alert visible.
             isRunning = false
             stopSelf()
             return
         }
 
-        // Manual stop while still counting down – tear everything down.
         countDownTimer?.cancel()
         countDownTimer = null
         isRunning = false
         releaseWakeLock()
         stopForeground(STOP_FOREGROUND_REMOVE)
+        val nm = getSystemService(NotificationManager::class.java)
+        nm.cancel(NOTIFICATION_ID_RUNNING)
+        nm.cancel(NOTIFICATION_ID_COMPLETE)
         stopSelf()
     }
 
@@ -212,7 +178,7 @@ class TimerForegroundService : Service() {
             PowerManager.PARTIAL_WAKE_LOCK,
             "lift::rest-timer",
         ).apply {
-            acquire(10 * 60 * 1_000L) // 10 min safety net
+            acquire(10 * 60 * 1_000L)
         }
     }
 
@@ -225,11 +191,6 @@ class TimerForegroundService : Service() {
 
     // ── Notifications ────────────────────────────────────────────────
 
-    /**
-     * Silent, ongoing notification shown while the timer counts down.
-     * Uses the low-importance [CHANNEL_SILENT] so it produces no sound
-     * and no heads-up.
-     */
     private fun buildRunningNotification(remainingSeconds: Int): Notification {
         val min = remainingSeconds / 60
         val sec = remainingSeconds % 60
@@ -246,14 +207,6 @@ class TimerForegroundService : Service() {
             .build()
     }
 
-    /**
-     * Persistent, audible notification shown when the timer completes.
-     * Uses the high-importance [CHANNEL_ALERT] so it plays the default
-     * notification sound and vibrates.
-     *
-     * `setAutoCancel(false)` ensures it stays in the notification shade
-     * until the user explicitly dismisses it.
-     */
     private fun buildCompleteNotification(): Notification {
         return NotificationCompat.Builder(this, CHANNEL_ALERT)
             .setSmallIcon(R.mipmap.launcher_icon)
@@ -268,10 +221,6 @@ class TimerForegroundService : Service() {
             .build()
     }
 
-    /**
-     * [PendingIntent] that re-opens the app when the user taps the
-     * notification.
-     */
     private fun launchIntent(): PendingIntent {
         val intent = packageManager.getLaunchIntentForPackage(packageName)
         return PendingIntent.getActivity(
@@ -288,7 +237,6 @@ class TimerForegroundService : Service() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val nm = getSystemService(NotificationManager::class.java)
 
-        // ── Silent channel for the running countdown ───────────────
         if (nm.getNotificationChannel(CHANNEL_SILENT) == null) {
             nm.createNotificationChannel(
                 NotificationChannel(
@@ -304,7 +252,6 @@ class TimerForegroundService : Service() {
             )
         }
 
-        // ── Alert channel for the completion notification ──────────
         if (nm.getNotificationChannel(CHANNEL_ALERT) == null) {
             nm.createNotificationChannel(
                 NotificationChannel(

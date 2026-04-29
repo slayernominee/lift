@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart' show WidgetsBinding, AppLifecycleState;
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lift/models/exercise.dart';
 import 'package:lift/models/workout.dart';
@@ -172,7 +173,8 @@ class WorkoutProvider with ChangeNotifier {
         NotificationService.instance.scheduleRestTimerNotification(remaining);
       } else {
         settingsBox.delete('timer_end_time');
-        NotificationService.instance.cancelRestTimerNotification();
+        // Timer already expired — the native foreground service already
+        // posted the completion notification. Do NOT cancel it.
       }
     }
   }
@@ -213,7 +215,12 @@ class WorkoutProvider with ChangeNotifier {
       _secondsRemaining = endTime.difference(now).inSeconds;
       notifyListeners();
     } else {
-      stopTimer();
+      // If the app is backgrounded the native foreground service has
+      // already posted the completion notification — leave it alone.
+      // If foregrounded, cancel it so the in-app UI + haptics handle it.
+      final isBackground =
+          WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed;
+      stopTimer(cancelNotification: !isBackground);
       HapticFeedback.heavyImpact();
       Future.delayed(const Duration(milliseconds: 500), () {
         HapticFeedback.heavyImpact();
@@ -221,14 +228,16 @@ class WorkoutProvider with ChangeNotifier {
     }
   }
 
-  void stopTimer() {
+  void stopTimer({bool cancelNotification = true}) {
     _timer?.cancel();
     _isTimerActive = false;
     _secondsRemaining = 0;
     Hive.box<dynamic>('settings').delete('timer_end_time');
-    // Cancel the scheduled notification – the timer expired in the foreground
-    // so the user already sees the in-app UI and haptic feedback.
-    NotificationService.instance.cancelRestTimerNotification();
+    if (cancelNotification) {
+      // Cancel the native foreground service + OS alarm fallback so no
+      // completion notification appears (in-app UI + haptics handle it).
+      NotificationService.instance.cancelRestTimerNotification();
+    }
     notifyListeners();
   }
 

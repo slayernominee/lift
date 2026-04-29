@@ -199,17 +199,19 @@ class NotificationService {
 
     // ── Strategy 1: Native foreground service (Android only) ────────
     if (Platform.isAndroid) {
-      await _startForegroundService(duration);
+      final started = await _startForegroundService(duration);
+      if (started) return; // foreground service handles everything
     }
 
-    // ── Strategy 2: OS-level alarm (all platforms, fallback) ────────
+    // ── Strategy 2: OS-level alarm (iOS / Android fallback) ─────────
     await _scheduleOsAlarm(duration);
   }
 
   // ─── Native foreground service ────────────────────────────────────
 
   /// Starts the native [TimerForegroundService] via MethodChannel.
-  Future<void> _startForegroundService(Duration duration) async {
+  /// Returns `true` if the service started successfully.
+  Future<bool> _startForegroundService(Duration duration) async {
     try {
       debugPrint(
         'NotificationService: starting foreground service '
@@ -219,11 +221,13 @@ class NotificationService {
         'durationSeconds': duration.inSeconds,
       });
       debugPrint('NotificationService: foreground service started');
+      return true;
     } catch (e, stack) {
       debugPrint(
         'NotificationService: foreground service failed, '
         'will rely on OS alarm fallback\n$e\n$stack',
       );
+      return false;
     }
   }
 
@@ -303,12 +307,29 @@ class NotificationService {
     // Stop native foreground service
     await _stopForegroundService();
 
-    // Cancel OS alarm fallback
+    // Cancel OS alarm fallback + both foreground-service notification IDs
     if (!_initialized) return;
     try {
-      await _plugin.cancel(_notificationId);
+      await _plugin.cancel(_notificationId); // zonedSchedule fallback (0)
+      await _plugin.cancel(10); // native running countdown
+      await _plugin.cancel(11); // native completion alert
     } catch (e) {
       debugPrint('NotificationService: cancel failed ($e)');
+    }
+  }
+
+  /// Called when the app returns to the foreground.
+  ///
+  /// Dismisses the completion notification (ID 11) because the user has
+  /// now opened the app. The silent running notification (ID 10) is also
+  /// cancelled as a safety net.
+  Future<void> dismissCompletionNotification() async {
+    if (!Platform.isAndroid || !_initialized) return;
+    try {
+      await _plugin.cancel(10);
+      await _plugin.cancel(11);
+    } catch (e) {
+      debugPrint('NotificationService: dismiss completion failed ($e)');
     }
   }
 

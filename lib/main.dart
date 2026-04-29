@@ -73,8 +73,33 @@ Future<void> _migrateDatabase() async {
   }
 }
 
-class LiftApp extends StatelessWidget {
+class LiftApp extends StatefulWidget {
   const LiftApp({super.key});
+
+  @override
+  State<LiftApp> createState() => _LiftAppState();
+}
+
+class _LiftAppState extends State<LiftApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // User opened the app — dismiss any visible completion notification.
+      NotificationService.instance.dismissCompletionNotification();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
