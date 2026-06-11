@@ -6,7 +6,7 @@
   </a>
 </p>
 
-A modern **vibe-coded** fitness tracker built with Flutter. It works entirely offline, so you don't really need to worry about any issues that might arise from bad code quality except bugs (just report them). For me it works perfectly fine, so I'm sharing this lol.
+A modern **vibe-coded** fitness tracker built with Flutter. It works **entirely offline**, so you don't really need to worry about any issues that might arise from bad code quality except bugs (just report them). For me it works perfectly fine, so I'm sharing this lol.
 
 ## Showcase
 
