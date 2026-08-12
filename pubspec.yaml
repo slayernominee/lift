@@ -62,7 +62,7 @@ dependencies:
 
   # Notifications
   flutter_local_notifications: ^18.0.1
-  flutter_timezone: ^4.1.1
+  flutter_timezone: ^5.1.0
   timezone: ^0.10.1
 
 dev_dependencies:

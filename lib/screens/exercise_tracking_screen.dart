@@ -1046,6 +1046,10 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
           repsSubLabel: 'Reps per session',
           volumeLabel: 'History',
           volumeSubLabel: 'Volume per session',
+          showMetricSwitcher: true,
+          initialMetric: provider.getChartMetric(widget.exercise.id),
+          onMetricChanged: (metric) =>
+              provider.setChartMetric(widget.exercise.id, metric),
         );
       },
     );

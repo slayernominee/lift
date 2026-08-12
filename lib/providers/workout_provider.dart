@@ -146,6 +146,20 @@ class WorkoutProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // --- Per-Exercise Chart Metric ---
+  // Remembers the selected chart metric ('Reps' or 'Volume') for each
+  // exercise so it can be restored when the chart is reopened.
+  String getChartMetric(String exerciseId) {
+    return Hive.box<dynamic>('settings').get(
+          'chart_metric_$exerciseId',
+          defaultValue: 'Reps',
+        ) as String;
+  }
+
+  void setChartMetric(String exerciseId, String metric) {
+    Hive.box<dynamic>('settings').put('chart_metric_$exerciseId', metric);
+  }
+
   // --- Global Timer State ---
   Timer? _timer;
   int _secondsRemaining = 0;

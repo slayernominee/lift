@@ -18,6 +18,16 @@ class TimelineChart extends StatefulWidget {
   final String volumeSubLabel;
   final Color? color;
 
+  /// Initial metric shown when the chart is first built ('Reps' or 'Volume').
+  final String initialMetric;
+
+  /// Notifies the parent when the user switches metric, so the selection can
+  /// be persisted (e.g. per-exercise).
+  final ValueChanged<String>? onMetricChanged;
+
+  /// Explicitly show/hide the reps/volume metric switcher.
+  final bool showMetricSwitcher;
+
   const TimelineChart({
     super.key,
     required this.repsPoints,
@@ -27,6 +37,9 @@ class TimelineChart extends StatefulWidget {
     required this.volumeLabel,
     required this.volumeSubLabel,
     this.color,
+    this.initialMetric = 'Reps',
+    this.onMetricChanged,
+    this.showMetricSwitcher = false,
   });
 
   @override
@@ -35,8 +48,20 @@ class TimelineChart extends StatefulWidget {
 
 class _TimelineChartState extends State<TimelineChart> {
   String _selectedRange = 'All';
-  String _selectedMetric = 'Reps';
+  late String _selectedMetric;
   int _chartOffsetDays = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedMetric = widget.initialMetric;
+  }
+
+  void _setMetric(String metric) {
+    if (_selectedMetric == metric) return;
+    setState(() => _selectedMetric = metric);
+    widget.onMetricChanged?.call(metric);
+  }
 
   int _getRangeDays() {
     if (_selectedRange == '1W') return 7;
@@ -115,7 +140,7 @@ class _TimelineChartState extends State<TimelineChart> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (widget.repsLabel != widget.volumeLabel) ...[
+                if (widget.showMetricSwitcher) ...[
                   _buildMetricSwitcher(),
                   const SizedBox(width: 12),
                 ],
@@ -177,14 +202,14 @@ class _TimelineChartState extends State<TimelineChart> {
             label: 'Reps',
             icon: Icons.format_list_numbered,
             isSelected: _selectedMetric == 'Reps',
-            onTap: () => setState(() => _selectedMetric = 'Reps'),
+            onTap: () => _setMetric('Reps'),
           ),
           const SizedBox(width: 4),
           _buildMetricButton(
             label: 'Volume',
             icon: Icons.fitness_center,
             isSelected: _selectedMetric == 'Volume',
-            onTap: () => setState(() => _selectedMetric = 'Volume'),
+            onTap: () => _setMetric('Volume'),
           ),
         ],
       ),
