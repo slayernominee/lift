@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:lift/screens/workouts_screen.dart';
 import 'package:lift/screens/exercises_screen.dart';
 import 'package:lift/screens/stats_screen.dart';
-import 'package:lift/screens/weight_screen.dart';
 import 'package:lift/screens/settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -19,7 +18,6 @@ class _HomeScreenState extends State<HomeScreen> {
     const WorkoutsScreen(),
     const ExercisesScreen(),
     const StatsScreen(),
-    const WeightScreen(),
     const SettingsScreen(),
   ];
 
@@ -53,11 +51,6 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.bar_chart_outlined),
             selectedIcon: Icon(Icons.bar_chart),
             label: 'Stats',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.monitor_weight_outlined),
-            selectedIcon: Icon(Icons.monitor_weight),
-            label: 'Weight',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),

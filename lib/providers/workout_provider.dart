@@ -9,7 +9,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lift/models/exercise.dart';
 import 'package:lift/models/workout.dart';
 import 'package:lift/models/log.dart';
-import 'package:lift/models/weight.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart';
 import 'package:lift/database/database_helper.dart';
@@ -18,7 +17,6 @@ import 'package:lift/services/notification_service.dart';
 class WorkoutProvider with ChangeNotifier {
   final Box<Exercise> _exerciseBox = Hive.box<Exercise>('exercises');
   final Box<Workout> _workoutBox = Hive.box<Workout>('workouts');
-  final Box<WeightEntry> _weightBox = Hive.box<WeightEntry>('weights');
 
   List<ExerciseLog> _logs = [];
 
@@ -113,9 +111,6 @@ class WorkoutProvider with ChangeNotifier {
     });
     return allWorkouts;
   }
-
-  List<WeightEntry> get weightEntries =>
-      _weightBox.values.toList()..sort((a, b) => b.date.compareTo(a.date));
 
   List<String> get muscles => _muscles;
   List<String> get bodyParts => _bodyParts;
@@ -615,23 +610,11 @@ class WorkoutProvider with ChangeNotifier {
     updateWorkout(workout);
   }
 
-  // --- Weight Methods ---
-  void addWeightEntry(WeightEntry entry) {
-    _weightBox.put(entry.id, entry);
-    notifyListeners();
-  }
-
-  void deleteWeightEntry(String id) {
-    _weightBox.delete(id);
-    notifyListeners();
-  }
-
   // --- Data Reset Methods ---
   Future<void> resetAllData() async {
     // Clear all Hive boxes
     await _exerciseBox.clear();
     await _workoutBox.clear();
-    await _weightBox.clear();
 
     // Clear all logs from SQLite database
     final db = await DatabaseHelper.instance.database;

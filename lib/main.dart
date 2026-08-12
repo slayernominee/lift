@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:lift/models/exercise.dart';
 import 'package:lift/models/workout.dart';
 
-import 'package:lift/models/weight.dart';
 import 'package:lift/providers/workout_provider.dart';
 import 'package:lift/screens/home_screen.dart';
 import 'package:lift/services/notification_service.dart';
@@ -22,12 +21,10 @@ void main() async {
   Hive.registerAdapter(ExerciseAdapter());
   Hive.registerAdapter(WorkoutAdapter());
   Hive.registerAdapter(WorkoutExerciseAdapter());
-  Hive.registerAdapter(WeightEntryAdapter());
 
   // Open Hive Boxes
   await Hive.openBox<Exercise>('exercises');
   await Hive.openBox<Workout>('workouts');
-  await Hive.openBox<WeightEntry>('weights');
   await Hive.openBox<dynamic>('settings');
 
   // Initialize notifications (rest timer background alerts)
@@ -57,7 +54,6 @@ Future<void> _migrateDatabase() async {
         // Delete all old boxes with old schema
         await Hive.deleteBoxFromDisk('exercises');
         await Hive.deleteBoxFromDisk('workouts');
-        await Hive.deleteBoxFromDisk('weights');
       } catch (e) {
         // Boxes don't exist or can't be deleted - that's okay
       }
