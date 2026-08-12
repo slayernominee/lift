@@ -341,7 +341,7 @@ class SettingsScreen extends StatelessWidget {
             ),
             const Center(
               child: Text(
-                'Version 1.9.0',
+                'Version 1.10.1',
                 style: TextStyle(color: Colors.grey),
               ),
             ),
@@ -442,7 +442,7 @@ class SettingsScreen extends StatelessWidget {
                 onTap: () => showLicensePage(
                   context: context,
                   applicationName: 'Lift',
-                  applicationVersion: '1.9.0',
+                  applicationVersion: '1.10.1',
                 ),
               ),
             ),

@@ -2,7 +2,7 @@
 
 **Lift** — Modern, offline-first fitness tracker built with Flutter.
 
-> **Version:** 1.9.0
+> **Version:** 1.10.1
 > **License:** AGPL-3.0
 
 ---

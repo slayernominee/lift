@@ -48,5 +48,5 @@ Builds:
       - .flutter-plugins-dependencies
       - .flutter-plugins
 
-CurrentVersion: 1.9.0
-CurrentVersionCode: 11
+CurrentVersion: 1.10.1
+CurrentVersionCode: 12
