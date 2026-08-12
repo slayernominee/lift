@@ -63,7 +63,11 @@ class _ExerciseTrackingScreenState extends State<ExerciseTrackingScreen> {
       widget.workout.id,
       _selectedDate,
     );
-    _lastLog = provider.getLastLog(widget.exercise.id, widget.workout.id);
+    _lastLog = provider.getLastLog(
+      widget.exercise.id,
+      widget.workout.id,
+      before: _selectedDate,
+    );
 
     setState(() {
       if (log != null) {

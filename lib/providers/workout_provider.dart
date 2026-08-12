@@ -608,10 +608,28 @@ class WorkoutProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  ExerciseLog? getLastLog(String exerciseId, String workoutId) {
+  ExerciseLog? getLastLog(
+    String exerciseId,
+    String workoutId, {
+    DateTime? before,
+  }) {
     final logs = getLogsForExercise(exerciseId, workoutId);
     if (logs.isEmpty) return null;
-    return logs.first;
+
+    // Without a cutoff, return the most recent log.
+    if (before == null) return logs.first;
+
+    // Otherwise, return the most recent log from a day strictly before `before`.
+    // (logs are sorted newest-first.) This prevents the session currently
+    // being edited from being used as its own "last session" placeholder data.
+    final startOfDay = DateTime(before.year, before.month, before.day);
+    for (final log in logs) {
+      final logDay = DateTime(log.date.year, log.date.month, log.date.day);
+      if (logDay.isBefore(startOfDay)) {
+        return log;
+      }
+    }
+    return null;
   }
 
   // --- Reordering ---
