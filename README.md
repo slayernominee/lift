@@ -10,8 +10,11 @@ A modern **vibe-coded** fitness tracker built with Flutter. It works **entirely 
 
 ## Showcase
 
+|                                                   |                                                   |                                                   |
+| ------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------- |
 | <img src=".github/showcase/1.webp" width="200" /> | <img src=".github/showcase/2.webp" width="200" /> | <img src=".github/showcase/3.webp" width="200" /> |
 | <img src=".github/showcase/4.webp" width="200" /> | <img src=".github/showcase/5.webp" width="200" /> | <img src=".github/showcase/6.webp" width="200" /> |
+| <img src=".github/showcase/7.webp" width="200" /> |                                                   |                                                   |
 
 ## Code Signing
 
