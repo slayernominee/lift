@@ -1,4 +1,4 @@
-package com.slayernominee.lift
+package de.catq.lift
 
 import android.content.Intent
 import android.os.Build
@@ -9,7 +9,7 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
 
     companion object {
-        private const val CHANNEL = "com.slayernominee.lift/timer"
+        private const val CHANNEL = "de.catq.lift/timer"
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

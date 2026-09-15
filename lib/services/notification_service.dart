@@ -38,7 +38,7 @@ class NotificationService {
   static const _alertChannelDescription = 'Alert when your rest period is over';
   static const _notificationId = 0;
 
-  static const _methodChannel = MethodChannel('com.slayernominee.lift/timer');
+  static const _methodChannel = MethodChannel('de.catq.lift/timer');
 
   bool _initialized = false;
   bool _permissionRequested = false;

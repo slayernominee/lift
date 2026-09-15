@@ -1,4 +1,4 @@
-package com.slayernominee.lift
+package de.catq.lift
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -25,8 +25,8 @@ class TimerForegroundService : Service() {
         const val NOTIFICATION_ID_COMPLETE = 11
 
         // ── Intent actions ────────────────────────────────────────────
-        const val ACTION_START = "com.slayernominee.lift.TIMER_START"
-        const val ACTION_STOP = "com.slayernominee.lift.TIMER_STOP"
+        const val ACTION_START = "de.catq.lift.TIMER_START"
+        const val ACTION_STOP = "de.catq.lift.TIMER_STOP"
         const val EXTRA_DURATION_SECONDS = "duration_seconds"
 
         var isRunning: Boolean = false
